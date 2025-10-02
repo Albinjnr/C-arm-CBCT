@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study List - AJR Medical Imaging System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background: #1a1a1a;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        
+        .header-bg {
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar {
+            background: rgba(45, 45, 45, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .content-card {
+            background: rgba(45, 45, 45, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .content-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(0, 122, 255, 0.05) 100%);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.2) 0%, rgba(0, 122, 255, 0.1) 100%);
+            border-color: rgba(0, 122, 255, 0.4);
+        }
+        
+        .study-row {
+            background: rgba(58, 58, 58, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .study-row:hover {
+            background: rgba(58, 58, 58, 0.8);
+            border-color: rgba(0, 122, 255, 0.3);
+        }
+        
+        .action-btn {
+            background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 122, 255, 0.4);
+        }
+        
+        .emergency-btn {
+            background: linear-gradient(135deg, #FF3B30 0%, #CC2E24 100%);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(255, 59, 48, 0); }
+        }
+        
+        .search-input {
+            background: rgba(58, 58, 58, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+        }
+        
+        .nav-item {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+        }
+        
+        .nav-item:hover {
+            background: rgba(0, 122, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: rgba(0, 122, 255, 0.2);
+            border-left: 3px solid #007AFF;
+        }
+        
+        .image-preview {
+            background: #000;
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .image-preview:hover {
+            border-color: #007AFF;
+            transform: scale(1.02);
+        }
+        
+        .modal-bg {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        
+        .chart-container {
+            background: rgba(58, 58, 58, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+        
+        .filter-chip {
+            background: rgba(58, 58, 58, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .filter-chip:hover {
+            background: rgba(58, 58, 58, 0.8);
+            border-color: rgba(0, 122, 255, 0.3);
+        }
+        
+        .filter-chip.active {
+            background: rgba(0, 122, 255, 0.2);
+            border-color: #007AFF;
+        }
+        
+        .notification-badge {
+            background: #FF3B30;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header-bg fixed top-0 left-0 right-0 z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button id="menuToggle" class="lg:hidden p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20 transition-colors">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                        </svg>
+                    </button>
+                    <div class="flex items-center space-x-3">
+                        <img src="resources/logo.png" alt="AJR" class="w-10 h-10">
+                        <h1 class="text-2xl font-bold">AJR Medical Imaging</h1>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button class="p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20 transition-colors relative">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                            </svg>
+                            <span class="notification-badge absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs flex items-center justify-center">5</span>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <span class="text-gray-300">Dr. Smith</span>
+                        <button id="signOutBtn" class="p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20 transition-colors">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex pt-20">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar fixed left-0 top-20 bottom-0 w-64 z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+            <div class="p-6 space-y-6">
+                <nav class="space-y-2">
+                    <a href="worklist.html" class="nav-item flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                        </svg>
+                        <span>Worklist</span>
+                    </a>
+                    
+                    <a href="patient-registration.html" class="nav-item flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                        <span>Add Patient</span>
+                    </a>
+                    
+                    <a href="examination.html" class="nav-item flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                        </svg>
+                        <span>Examination</span>
+                    </a>
+                    
+                    <a href="cbct-workflow.html" class="nav-item flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        <span>CBCT Workflow</span>
+                    </a>
+                    
+                    <a href="study-list.html" class="nav-item active flex items-center space-x-3 px-4 py-3 text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                        </svg>
+                        <span>Study List</span>
+                    </a>
+                </nav>
+                
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide">Quick Actions</h3>
+                    <button class="emergency-btn w-full py-3 rounded-xl text-white font-semibold">
+                        Emergency Registration
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Overlay for mobile -->
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden lg:hidden"></div>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-64 p-6">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold mb-2">Study Archive</h2>
+                <p class="text-gray-400">Manage completed studies and image analysis</p>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stat-card rounded-2xl p-6" data-filter="all">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-blue-500 bg-opacity-20 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                            </svg>
+                        </div>
+                        <span class="text-2xl font-bold text-blue-400">247</span>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-1">Total Studies</h3>
+                    <p class="text-gray-400 text-sm">All completed studies</p>
+                </div>
+                
+                <div class="stat-card rounded-2xl p-6" data-filter="today">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                        </div>
+                        <span class="text-2xl font-bold text-green-400">18</span>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-1">Today's Studies</h3>
+                    <p class="text-gray-400 text-sm">Completed today</p>
+                </div>
+                
+                <div class="stat-card rounded-2xl p-6" data-filter="emergency">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-red-500 bg-opacity-20 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                            </svg>
+                        </div>
+                        <span class="text-2xl font-bold text-red-400">12</span>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-1">Emergency Studies</h3>
+                    <p class="text-gray-400 text-sm">Urgent procedures</p>
+                </div>
+                
+                <div class="stat-card rounded-2xl p-6" data-filter="images">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-yellow-500 bg-opacity-20 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                            </svg>
+                        </div>
+                        <span class="text-2xl font-bold text-yellow-400">1,247</span>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-1">Total Images</h3>
+                    <p class="text-gray-400 text-sm">All captured images</p>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 space-y-4 lg:space-y-0">
+                <div class="flex flex-wrap gap-2">
+                    <button class="filter-chip active px-4 py-2 rounded-full text-sm font-medium" data-filter="all">
+                        All Studies
+                    </button>
+                    <button class="filter-chip px-4 py-2 rounded-full text-sm font-medium" data-filter="fluoro">
+                        Fluoroscopy
+                    </button>
+                    <button class="filter-chip px-4 py-2 rounded-full text-sm font-medium" data-filter="cbct">
+                        CBCT
+                    </button>
+                    <button class="filter-chip px-4 py-2 rounded-full text-sm font-medium" data-filter="emergency">
+                        Emergency
+                    </button>
+                    <button class="filter-chip px-4 py-2 rounded-full text-sm font-medium" data-filter="completed">
+                        Completed
+                    </button>
+                </div>
+                
+                <div class="flex space-x-4">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            class="search-input w-64 px-4 py-3 rounded-xl text-white placeholder-gray-400 focus:outline-none"
+                            placeholder="Search studies..."
+                        >
+                        <svg class="absolute right-3 top-3.5 w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                        </svg>
+                    </div>
+                    
+                    <button id="exportBtn" class="action-btn px-6 py-3 rounded-xl text-white font-semibold">
+                        Export Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Study List -->
+            <div class="content-card rounded-2xl overflow-hidden">
+                <div class="p-6 border-b border-gray-600">
+                    <h3 class="text-xl font-bold">Completed Studies</h3>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-800">
+                            <tr>
+                                <th class="px-6 py-4 text-left">
+                                    <input type="checkbox" id="selectAll" class="rounded">
+                                </th>
+                                <th class="px-6 py-4 text-left font-semibold">Patient Name</th>
+                                <th class="px-6 py-4 text-left font-semibold">Patient ID</th>
+                                <th class="px-6 py-4 text-left font-semibold">Procedure</th>
+                                <th class="px-6 py-4 text-left font-semibold">Study Type</th>
+                                <th class="px-6 py-4 text-left font-semibold">Images</th>
+                                <th class="px-6 py-4 text-left font-semibold">Date & Time</th>
+                                <th class="px-6 py-4 text-left font-semibold">Status</th>
+                                <th class="px-6 py-4 text-left font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studyTable">
+                            <!-- Study data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Study Preview Modal -->
+    <div id="previewModal" class="fixed inset-0 modal-bg hidden items-center justify-center z-50">
+        <div class="content-card rounded-2xl p-8 max-w-6xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Study Details</h3>
+                <button id="closePreview" class="text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="previewContent" class="grid lg:grid-cols-2 gap-8">
+                <!-- Preview content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Processing Modal -->
+    <div id="processingModal" class="fixed inset-0 modal-bg hidden items-center justify-center z-50">
+        <div class="content-card rounded-2xl p-8 max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Advanced Image Processing</h3>
+                <button id="closeProcessing" class="text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="grid lg:grid-cols-3 gap-6">
+                <!-- Image Display -->
+                <div class="lg:col-span-2">
+                    <div class="chart-container p-4 rounded-lg">
+                        <div class="image-preview aspect-video flex items-center justify-center">
+                            <div class="text-center text-gray-400">
+                                <svg class="w-16 h-16 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                </svg>
+                                <p>Medical Image</p>
+                                <p class="text-sm">Click to load for processing</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Processing Tools -->
+                    <div class="mt-6 grid grid-cols-2 gap-4">
+                        <div class="chart-container p-4 rounded-lg">
+                            <h4 class="font-semibold mb-3">Image Enhancement</h4>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-2">Contrast</label>
+                                    <input type="range" class="w-full" min="0" max="100" value="50">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-2">Brightness</label>
+                                    <input type="range" class="w-full" min="0" max="100" value="50">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-2">Sharpness</label>
+                                    <input type="range" class="w-full" min="0" max="100" value="50">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container p-4 rounded-lg">
+                            <h4 class="font-semibold mb-3">Noise Reduction</h4>
+                            <div class="space-y-3">
+                                <button class="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition-colors">
+                                    Gaussian Filter
+                                </button>
+                                <button class="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition-colors">
+                                    Median Filter
+                                </button>
+                                <button class="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition-colors">
+                                    Edge Enhancement
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Processing Options -->
+                <div class="space-y-6">
+                    <div class="chart-container p-4 rounded-lg">
+                        <h4 class="font-semibold mb-3">Measurement Tools</h4>
+                        <div class="space-y-2">
+                            <button class="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition-colors">
+                                Length Measurement
+                            </button>
+                            <button class="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition-colors">
+                                Angle Measurement
+                            </button>
+                            <button class="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition-colors">
+                                Area Measurement
+                            </button>
+                            <button class="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition-colors">
+                                Volume Calculation
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container p-4 rounded-lg">
+                        <h4 class="font-semibold mb-3">Annotation</h4>
+                        <div class="space-y-2">
+                            <button class="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition-colors">
+                                Add Text Annotation
+                            </button>
+                            <button class="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition-colors">
+                                Arrow Marker
+                            </button>
+                            <button class="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition-colors">
+                                ROI Selection
+                            </button>
+                            <button class="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition-colors">
+                                Freehand Drawing
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container p-4 rounded-lg">
+                        <h4 class="font-semibold mb-3">Export Options</h4>
+                        <div class="space-y-2">
+                            <button class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm transition-colors">
+                                Save to PACS
+                            </button>
+                            <button class="w-full py-2 bg-green-600 hover:bg-green-500 rounded-lg text-sm transition-colors">
+                                Export DICOM
+                            </button>
+                            <button class="w-full py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm transition-colors">
+                                Export JPEG
+                            </button>
+                            <button class="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm transition-colors">
+                                Print Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample study data
+        const studies = [
+            {
+                id: 'ST001',
+                patientName: 'John Smith',
+                patientId: 'PT001',
+                procedure: 'Orthopedic',
+                studyType: 'Knee Joint - Fluoroscopy',
+                images: 15,
+                dateTime: '2024-01-15 09:30',
+                status: 'Completed',
+                type: 'fluoro',
+                emergency: false
+            },
+            {
+                id: 'ST002',
+                patientName: 'Sarah Johnson',
+                patientId: 'PT002',
+                procedure: 'Vascular',
+                studyType: 'Abdominal Aorta - DSA',
+                images: 8,
+                dateTime: '2024-01-15 10:45',
+                status: 'Completed',
+                type: 'fluoro',
+                emergency: false
+            },
+            {
+                id: 'ST003',
+                patientName: 'Michael Brown',
+                patientId: 'PT003',
+                procedure: 'Cardiac',
+                studyType: 'Coronary Angiography - CBCT',
+                images: 400,
+                dateTime: '2024-01-15 11:20',
+                status: 'Completed',
+                type: 'cbct',
+                emergency: true
+            },
+            {
+                id: 'ST004',
+                patientName: 'Emily Davis',
+                patientId: 'PT004',
+                procedure: 'Urology',
+                studyType: 'Kidney Stones - Fluoroscopy',
+                images: 12,
+                dateTime: '2024-01-15 14:15',
+                status: 'Completed',
+                type: 'fluoro',
+                emergency: false
+            },
+            {
+                id: 'ST005',
+                patientName: 'Robert Wilson',
+                patientId: 'PT005',
+                procedure: 'Pain Management',
+                studyType: 'Spinal Injection - CBCT',
+                images: 350,
+                dateTime: '2024-01-15 15:30',
+                status: 'Completed',
+                type: 'cbct',
+                emergency: false
+            },
+            {
+                id: 'ST006',
+                patientName: 'Lisa Anderson',
+                patientId: 'PT006',
+                procedure: 'Endoscopy',
+                studyType: 'Upper GI - Fluoroscopy',
+                images: 20,
+                dateTime: '2024-01-15 16:45',
+                status: 'Completed',
+                type: 'fluoro',
+                emergency: false
+            }
+        ];
+
+        let filteredStudies = [...studies];
+        let selectedStudies = new Set();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeStudyList();
+            setupEventListeners();
+            animateElements();
+        });
+
+        function initializeStudyList() {
+            renderStudyTable();
+            updateStatistics();
+        }
+
+        function renderStudyTable() {
+            const tbody = document.getElementById('studyTable');
+            tbody.innerHTML = '';
+
+            filteredStudies.forEach((study, index) => {
+                const row = document.createElement('tr');
+                row.className = 'study-row border-b border-gray-700';
+                row.innerHTML = `
+                    <td class="px-6 py-4">
+                        <input type="checkbox" class="study-checkbox rounded" data-id="${study.id}">
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                ${study.patientName.split(' ').map(n => n[0]).join('')}
+                            </div>
+                            <div>
+                                <div class="font-semibold">${study.patientName}</div>
+                                <div class="text-sm text-gray-400">${study.patientId}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 font-mono text-sm">${study.patientId}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 rounded-full text-xs font-medium ${getProcedureColor(study.procedure)}">
+                            ${study.procedure}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center space-x-2">
+                            <span>${study.studyType}</span>
+                            ${study.emergency ? '<span class="px-2 py-1 bg-red-500 bg-opacity-20 text-red-300 rounded-full text-xs">Emergency</span>' : ''}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 font-mono">${study.images}</td>
+                    <td class="px-6 py-4 font-mono text-sm">${study.dateTime}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(study.status)}">
+                            ${study.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex space-x-2">
+                            <button class="preview-btn p-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors" data-id="${study.id}">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                </svg>
+                            </button>
+                            <button class="process-btn p-2 bg-green-600 hover:bg-green-500 rounded-lg transition-colors" data-id="${study.id}">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                            </button>
+                            <button class="export-btn p-2 bg-purple-600 hover:bg-purple-500 rounded-lg transition-colors" data-id="${study.id}">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Add event listeners to new elements
+            addTableEventListeners();
+        }
+
+        function getProcedureColor(procedure) {
+            const colors = {
+                'Orthopedic': 'bg-blue-500 bg-opacity-20 text-blue-300',
+                'Vascular': 'bg-red-500 bg-opacity-20 text-red-300',
+                'Cardiac': 'bg-pink-500 bg-opacity-20 text-pink-300',
+                'Urology': 'bg-green-500 bg-opacity-20 text-green-300',
+                'Pain Management': 'bg-purple-500 bg-opacity-20 text-purple-300',
+                'Endoscopy': 'bg-yellow-500 bg-opacity-20 text-yellow-300'
+            };
+            return colors[procedure] || 'bg-gray-500 bg-opacity-20 text-gray-300';
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'Completed': 'bg-green-500 bg-opacity-20 text-green-300',
+                'In Progress': 'bg-yellow-500 bg-opacity-20 text-yellow-300',
+                'Pending': 'bg-gray-500 bg-opacity-20 text-gray-300',
+                'Failed': 'bg-red-500 bg-opacity-20 text-red-300'
+            };
+            return colors[status] || 'bg-gray-500 bg-opacity-20 text-gray-300';
+        }
+
+        function setupEventListeners() {
+            // Menu toggle
+            document.getElementById('menuToggle').addEventListener('click', toggleSidebar);
+            document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+
+            // Statistics cards
+            document.querySelectorAll('.stat-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const filter = this.dataset.filter;
+                    filterStudies(filter);
+                });
+            });
+
+            // Filter chips
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    filterStudies(this.dataset.filter);
+                });
+            });
+
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                filterStudiesBySearch(searchTerm);
+            });
+
+            // Select all checkbox
+            document.getElementById('selectAll').addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.study-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                    if (this.checked) {
+                        selectedStudies.add(checkbox.dataset.id);
+                    } else {
+                        selectedStudies.delete(checkbox.dataset.id);
+                    }
+                });
+            });
+
+            // Export button
+            document.getElementById('exportBtn').addEventListener('click', exportData);
+
+            // Sign out
+            document.getElementById('signOutBtn').addEventListener('click', function() {
+                window.location.href = 'index.html';
+            });
+
+            // Modal close buttons
+            document.getElementById('closePreview').addEventListener('click', closePreviewModal);
+            document.getElementById('closeProcessing').addEventListener('click', closeProcessingModal);
+        }
+
+        function addTableEventListeners() {
+            // Study checkboxes
+            document.querySelectorAll('.study-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        selectedStudies.add(this.dataset.id);
+                    } else {
+                        selectedStudies.delete(this.dataset.id);
+                    }
+                });
+            });
+
+            // Preview buttons
+            document.querySelectorAll('.preview-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const studyId = this.dataset.id;
+                    showStudyPreview(studyId);
+                });
+            });
+
+            // Process buttons
+            document.querySelectorAll('.process-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const studyId = this.dataset.id;
+                    showAdvancedProcessing(studyId);
+                });
+            });
+
+            // Export buttons
+            document.querySelectorAll('.export-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const studyId = this.dataset.id;
+                    exportStudy(studyId);
+                });
+            });
+        }
+
+        function filterStudies(filter) {
+            if (filter === 'all') {
+                filteredStudies = [...studies];
+            } else if (filter === 'today') {
+                filteredStudies = studies.filter(study => study.dateTime.includes('2024-01-15'));
+            } else if (filter === 'emergency') {
+                filteredStudies = studies.filter(study => study.emergency);
+            } else if (filter === 'images') {
+                filteredStudies = studies.filter(study => study.images > 50);
+            } else {
+                filteredStudies = studies.filter(study => study.type === filter);
+            }
+            
+            renderStudyTable();
+            
+            // Animate the filter change
+            anime({
+                targets: '.study-row',
+                translateX: [-20, 0],
+                opacity: [0, 1],
+                duration: 500,
+                delay: anime.stagger(100),
+                easing: 'easeOutQuad'
+            });
+        }
+
+        function filterStudiesBySearch(searchTerm) {
+            filteredStudies = studies.filter(study => 
+                study.patientName.toLowerCase().includes(searchTerm) ||
+                study.patientId.toLowerCase().includes(searchTerm) ||
+                study.procedure.toLowerCase().includes(searchTerm) ||
+                study.studyType.toLowerCase().includes(searchTerm)
+            );
+            renderStudyTable();
+        }
+
+        function showStudyPreview(studyId) {
+            const study = studies.find(s => s.id === studyId);
+            if (!study) return;
+
+            const modal = document.getElementById('previewModal');
+            const content = document.getElementById('previewContent');
+            
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                            ${study.patientName.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div>
+                            <h4 class="text-2xl font-bold">${study.patientName}</h4>
+                            <p class="text-gray-400">${study.patientId}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-sm text-gray-400 mb-1">Procedure</p>
+                            <p class="font-semibold">${study.procedure}</p>
+                        </div>
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-sm text-gray-400 mb-1">Study Type</p>
+                            <p class="font-semibold">${study.studyType}</p>
+                        </div>
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-sm text-gray-400 mb-1">Images</p>
+                            <p class="font-semibold">${study.images}</p>
+                        </div>
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <p class="text-sm text-gray-400 mb-1">Date & Time</p>
+                            <p class="font-semibold">${study.dateTime}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <h4 class="font-semibold mb-3">Study Images</h4>
+                        <div class="grid grid-cols-4 gap-2">
+                            ${Array.from({length: Math.min(study.images, 8)}, (_, i) => `
+                                <div class="bg-gray-700 rounded aspect-video flex items-center justify-center cursor-pointer hover:bg-gray-600 transition-colors">
+                                    <div class="text-center">
+                                        <svg class="w-6 h-6 mx-auto mb-1 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                        </svg>
+                                        <p class="text-xs">Image ${i + 1}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${study.images > 8 ? '<div class="col-span-4 text-center text-gray-400 text-sm">... and more</div>' : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                        <button class="flex-1 bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-semibold transition-colors">
+                            View All Images
+                        </button>
+                        <button class="flex-1 bg-green-600 hover:bg-green-500 py-3 rounded-xl font-semibold transition-colors">
+                            Advanced Processing
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-800 rounded-lg p-6">
+                    <h4 class="text-lg font-semibold mb-4">Study Analytics</h4>
+                    <div class="chart-container p-4 rounded-lg">
+                        <div id="doseChart" style="height: 200px;"></div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-gray-400">Total Dose</p>
+                            <p class="font-semibold">2.3 mGy</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400">Study Duration</p>
+                            <p class="font-semibold">12 minutes</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Initialize chart
+            setTimeout(() => {
+                initializeDoseChart();
+            }, 100);
+            
+            anime({
+                targets: modal.querySelector('.content-card'),
+                scale: [0.8, 1],
+                opacity: [0, 1],
+                duration: 300,
+                easing: 'easeOutQuad'
+            });
+        }
+
+        function showAdvancedProcessing(studyId) {
+            const modal = document.getElementById('processingModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            anime({
+                targets: modal.querySelector('.content-card'),
+                scale: [0.8, 1],
+                opacity: [0, 1],
+                duration: 300,
+                easing: 'easeOutQuad'
+            });
+        }
+
+        function closePreviewModal() {
+            const modal = document.getElementById('previewModal');
+            
+            anime({
+                targets: modal.querySelector('.content-card'),
+                scale: [1, 0.8],
+                opacity: [1, 0],
+                duration: 300,
+                easing: 'easeOutQuad',
+                complete: function() {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            });
+        }
+
+        function closeProcessingModal() {
+            const modal = document.getElementById('processingModal');
+            
+            anime({
+                targets: modal.querySelector('.content-card'),
+                scale: [1, 0.8],
+                opacity: [1, 0],
+                duration: 300,
+                easing: 'easeOutQuad',
+                complete: function() {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            });
+        }
+
+        function exportStudy(studyId) {
+            showNotification('Exporting study data...', 'info');
+            setTimeout(() => {
+                showNotification('Study exported successfully', 'success');
+            }, 2000);
+        }
+
+        function exportData() {
+            if (selectedStudies.size === 0) {
+                showNotification('No studies selected for export', 'warning');
+                return;
+            }
+            
+            showNotification(`Exporting ${selectedStudies.size} studies...`, 'info');
+            setTimeout(() => {
+                showNotification('Data exported successfully', 'success');
+            }, 3000);
+        }
+
+        function initializeDoseChart() {
+            const chartDom = document.getElementById('doseChart');
+            const myChart = echarts.init(chartDom);
+            
+            const option = {
+                backgroundColor: 'transparent',
+                textStyle: {
+                    color: '#ffffff'
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(45, 45, 45, 0.9)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    textStyle: {
+                        color: '#ffffff'
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['0', '2', '4', '6', '8', '10', '12'],
+                    axisLine: {
+                        lineStyle: {
+                            color: 'rgba(255, 255, 255, 0.3)'
+                        }
+                    },
+                    axisLabel: {
+                        color: '#8E8E93'
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'Dose (mGy)',
+                    nameTextStyle: {
+                        color: '#8E8E93'
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: 'rgba(255, 255, 255, 0.3)'
+                        }
+                    },
+                    axisLabel: {
+                        color: '#8E8E93'
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                },
+                series: [{
+                    data: [0.1, 0.3, 0.8, 1.2, 1.8, 2.1, 2.3],
+                    type: 'line',
+                    smooth: true,
+                    lineStyle: {
+                        color: '#007AFF',
+                        width: 3
+                    },
+                    itemStyle: {
+                        color: '#007AFF'
+                    },
+                    areaStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: 'rgba(0, 122, 255, 0.3)'
+                            }, {
+                                offset: 1, color: 'rgba(0, 122, 255, 0.05)'
+                            }]
+                        }
+                    }
+                }]
+            };
+            
+            myChart.setOption(option);
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function updateStatistics() {
+            const stats = {
+                total: studies.length,
+                today: studies.filter(s => s.dateTime.includes('2024-01-15')).length,
+                emergency: studies.filter(s => s.emergency).length,
+                images: studies.reduce((sum, study) => sum + study.images, 0)
+            };
+
+            document.querySelector('[data-filter="all"] span').textContent = stats.total;
+            document.querySelector('[data-filter="today"] span').textContent = stats.today;
+            document.querySelector('[data-filter="emergency"] span').textContent = stats.emergency;
+            document.querySelector('[data-filter="images"] span').textContent = stats.images;
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg text-white font-medium ${
+                type === 'success' ? 'bg-green-600' : 
+                type === 'error' ? 'bg-red-600' : 
+                type === 'warning' ? 'bg-yellow-600' :
+                'bg-blue-600'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            anime({
+                targets: notification,
+                translateX: [300, 0],
+                opacity: [0, 1],
+                duration: 300,
+                easing: 'easeOutQuad'
+            });
+            
+            setTimeout(() => {
+                anime({
+                    targets: notification,
+                    translateX: [0, 300],
+                    opacity: [1, 0],
+                    duration: 300,
+                    easing: 'easeOutQuad',
+                    complete: function() {
+                        document.body.removeChild(notification);
+                    }
+                });
+            }, 3000);
+        }
+
+        function animateElements() {
+            // Animate statistics cards
+            anime({
+                targets: '.stat-card',
+                translateY: [50, 0],
+                opacity: [0, 1],
+                duration: 800,
+                delay: anime.stagger(200),
+                easing: 'easeOutQuad'
+            });
+
+            // Animate filter chips
+            anime({
+                targets: '.filter-chip',
+                scale: [0.8, 1],
+                opacity: [0, 1],
+                duration: 600,
+                delay: anime.stagger(100, {start: 1000}),
+                easing: 'easeOutQuad'
+            });
+
+            // Animate study rows
+            anime({
+                targets: '.study-row',
+                translateX: [-30, 0],
+                opacity: [0, 1],
+                duration: 600,
+                delay: anime.stagger(100, {start: 1500}),
+                easing: 'easeOutQuad'
+            });
+        }
+    </script>
+</body>
+</html>

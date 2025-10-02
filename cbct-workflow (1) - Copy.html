@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CBCT Workflow - AJR Medical Imaging System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background: #1a1a1a;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        
+        .header-bg {
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .workflow-container {
+            background: rgba(45, 45, 45, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .step-card {
+            background: rgba(58, 58, 58, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .step-card.active {
+            border-color: #007AFF;
+            background: rgba(0, 122, 255, 0.1);
+        }
+        
+        .step-card.completed {
+            border-color: #34C759;
+            background: rgba(52, 199, 89, 0.1);
+        }
+        
+        .step-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .step-card:hover::before {
+            left: 100%;
+        }
+        
+        .step-number {
+            background: rgba(58, 58, 58, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .step-card.active .step-number {
+            background: #007AFF;
+            border-color: #007AFF;
+        }
+        
+        .step-card.completed .step-number {
+            background: #34C759;
+            border-color: #34C759;
+        }
+        
+        .anatomy-selector {
+            background: rgba(58, 58, 58, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .anatomy-selector:hover {
+            border-color: rgba(0, 122, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .anatomy-selector.selected {
+            border-color: #007AFF;
+            background: rgba(0, 122, 255, 0.1);
+        }
+        
+        .c-arm-model {
+            background: rgba(26, 26, 26, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .c-arm-rotation {
+            transition: transform 2s ease-in-out;
+        }
+        
+        .laser-indicator {
+            background: linear-gradient(135deg, #FFD60A 0%, #FF9500 100%);
+            animation: laser-pulse 1s infinite;
+        }
+        
+        @keyframes laser-pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 20px #FFD60A; }
+            50% { opacity: 0.7; box-shadow: 0 0 40px #FFD60A; }
+        }
+        
+        .xray-indicator {
+            background: linear-gradient(135deg, #FF3B30 0%, #CC2E24 100%);
+            animation: xray-flash 0.3s ease-out;
+        }
+        
+        @keyframes xray-flash {
+            0% { opacity: 0; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0; transform: scale(1); }
+        }
+        
+        .collision-warning {
+            background: linear-gradient(135deg, #FF3B30 0%, #CC2E24 100%);
+            animation: collision-pulse 0.5s infinite;
+        }
+        
+        @keyframes collision-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .scanning-animation {
+            background: linear-gradient(90deg, #007AFF, #34C759, #FFD60A, #FF3B30);
+            background-size: 400% 400%;
+            animation: scanning-gradient 2s ease infinite;
+        }
+        
+        @keyframes scanning-gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: 251.2;
+            transition: stroke-dashoffset 0.5s ease-in-out;
+        }
+        
+        .control-btn {
+            background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 122, 255, 0.3);
+        }
+        
+        .control-btn:disabled {
+            background: rgba(58, 58, 58, 0.5);
+            color: #6D6D70;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .laser-btn {
+            background: linear-gradient(135deg, #FFD60A 0%, #FF9500 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .laser-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 214, 10, 0.3);
+        }
+        
+        .fire-xray-btn {
+            background: linear-gradient(135deg, #FF3B30 0%, #CC2E24 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .fire-xray-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 59, 48, 0.3);
+        }
+        
+        .angle-display {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-family: 'SF Mono', monospace;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .confirmation-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #007AFF;
+            border-radius: 4px;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .confirmation-checkbox.checked {
+            background: #007AFF;
+            border-color: #007AFF;
+        }
+        
+        .confirmation-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header-bg fixed top-0 left-0 right-0 z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button onclick="history.back()" class="p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20 transition-colors">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                    </button>
+                    <div class="flex items-center space-x-3">
+                        <img src="resources/logo.png" alt="AJR" class="w-10 h-10">
+                        <h1 class="text-2xl font-bold">CBCT Workflow</h1>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm">
+                        <span class="text-gray-400">Patient:</span>
+                        <span id="patientName" class="font-semibold ml-2">John Smith</span>
+                        <span class="text-gray-400 ml-4">Step:</span>
+                        <span id="currentStep" class="font-semibold ml-2 text-blue-400">1 of 4</span>
+                    </div>
+                    
+                    <button id="emergencyStop" class="w-12 h-12 bg-red-600 hover:bg-red-500 rounded-full flex items-center justify-center transition-colors">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 6h12v12H6z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-12 min-h-screen">
+        <div class="container mx-auto px-6">
+            <!-- Progress Indicator -->
+            <div class="flex justify-center mb-8">
+                <div class="relative w-32 h-32">
+                    <svg class="progress-ring w-32 h-32" viewBox="0 0 84 84">
+                        <circle class="progress-ring-circle" stroke="#007AFF" stroke-width="4" fill="transparent" r="40" cx="42" cy="42" id="progressCircle"/>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="text-2xl font-bold" id="progressPercent">25%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 1: Area Selection -->
+            <div id="step1" class="step-content">
+                <div class="workflow-container rounded-2xl p-8 mb-8">
+                    <h2 class="text-2xl font-bold mb-6">Step 1: Select Anatomical Area</h2>
+                    
+                    <div class="grid lg:grid-cols-2 gap-8">
+                        <!-- Anatomical Regions -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Anatomical Region</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="anatomy-selector rounded-xl p-4" data-area="head">
+                                    <div class="w-16 h-16 bg-blue-500 bg-opacity-20 rounded-xl flex items-center justify-center mb-3">
+                                        <svg class="w-8 h-8 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                                        </svg>
+                                    </div>
+                                    <h4 class="font-semibold">Head & Skull</h4>
+                                    <p class="text-sm text-gray-400">Brain, sinuses, temporal bone</p>
+                                </div>
+                                
+                                <div class="anatomy-selector rounded-xl p-4" data-area="chest">
+                                    <div class="w-16 h-16 bg-green-500 bg-opacity-20 rounded-xl flex items-center justify-center mb-3">
+                                        <svg class="w-8 h-8 text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                        </svg>
+                                    </div>
+                                    <h4 class="font-semibold">Chest</h4>
+                                    <p class="text-sm text-gray-400">Lungs, heart, mediastinum</p>
+                                </div>
+                                
+                                <div class="anatomy-selector rounded-xl p-4" data-area="abdomen">
+                                    <div class="w-16 h-16 bg-red-500 bg-opacity-20 rounded-xl flex items-center justify-center mb-3">
+                                        <svg class="w-8 h-8 text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                        </svg>
+                                    </div>
+                                    <h4 class="font-semibold">Abdomen</h4>
+                                    <p class="text-sm text-gray-400">Liver, kidneys, pancreas</p>
+                                </div>
+                                
+                                <div class="anatomy-selector rounded-xl p-4" data-area="pelvis">
+                                    <div class="w-16 h-16 bg-purple-500 bg-opacity-20 rounded-xl flex items-center justify-center mb-3">
+                                        <svg class="w-8 h-8 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                    </div>
+                                    <h4 class="font-semibold">Pelvis</h4>
+                                    <p class="text-sm text-gray-400">Hip, sacrum, coccyx</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- C-Arm Model -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">C-Arm Position</h3>
+                            <div class="c-arm-model aspect-square flex items-center justify-center">
+                                <div id="cArmVisualization" class="relative w-64 h-64">
+                                    <!-- C-Arm SVG Model -->
+                                    <svg viewBox="0 0 200 200" class="w-full h-full">
+                                        <!-- C-Arm Structure -->
+                                        <path d="M 50 100 A 50 50 0 1 1 150 100" stroke="#007AFF" stroke-width="8" fill="none" id="cArmPath"/>
+                                        <circle cx="50" cy="100" r="12" fill="#FF3B30" id="xraySource"/>
+                                        <circle cx="150" cy="100" r="12" fill="#34C759" id="detectorPanel"/>
+                                        <rect x="90" y="95" width="20" height="10" fill="#FFD60A" id="patientTable"/>
+                                    </svg>
+                                    <div class="absolute top-4 left-1/2 transform -translate-x-1/2 angle-display">
+                                        <span id="currentAngle">0°</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end mt-8">
+                        <button id="step1Next" class="control-btn px-8 py-3 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed" disabled onclick="nextStep()">
+                            Continue to Centering
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Patient Centering -->
+            <div id="step2" class="step-content hidden">
+                <div class="workflow-container rounded-2xl p-8 mb-8">
+                    <h2 class="text-2xl font-bold mb-6">Step 2: Patient Centering</h2>
+                    
+                    <div class="grid lg:grid-cols-2 gap-8">
+                        <!-- Centering Controls -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Centering Options</h3>
+                            
+                            <!-- Laser Controls -->
+                            <div class="mb-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="font-semibold">Laser Centering</span>
+                                    <button id="turnOnLaser" class="laser-btn px-4 py-2 rounded-lg text-black font-semibold">
+                                        Turn On Laser
+                                    </button>
+                                </div>
+                                <button id="confirmLaser" class="control-btn w-full py-3 rounded-lg text-white font-semibold disabled:opacity-50" disabled>
+                                    Confirm Laser Centering
+                                </button>
+                            </div>
+                            
+                            <!-- X-Ray Centering -->
+                            <div class="mb-6">
+                                <h4 class="font-semibold mb-4">X-Ray Centering</h4>
+                                
+                                <!-- 0 Degree Position -->
+                                <div class="mb-4 p-4 bg-gray-800 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span>0° Position</span>
+                                        <button id="moveTo0" class="control-btn px-4 py-2 rounded-lg text-white font-semibold">
+                                            Move to 0°
+                                        </button>
+                                    </div>
+                                    <div class="flex items-center space-x-4">
+                                        <button id="fire0" class="fire-xray-btn px-4 py-2 rounded-lg text-white font-semibold disabled:opacity-50" disabled>
+                                            Fire X-Ray
+                                        </button>
+                                        <div class="flex items-center space-x-2">
+                                            <div id="confirm0" class="confirmation-checkbox"></div>
+                                            <span>Confirm</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 90 Degree Position -->
+                                <div class="mb-4 p-4 bg-gray-800 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span>90° Position</span>
+                                        <button id="moveTo90" class="control-btn px-4 py-2 rounded-lg text-white font-semibold disabled:opacity-50" disabled>
+                                            Move to 90°
+                                        </button>
+                                    </div>
+                                    <div class="flex items-center space-x-4">
+                                        <button id="fire90" class="fire-xray-btn px-4 py-2 rounded-lg text-white font-semibold disabled:opacity-50" disabled>
+                                            Fire X-Ray
+                                        </button>
+                                        <div class="flex items-center space-x-2">
+                                            <div id="confirm90" class="confirmation-checkbox"></div>
+                                            <span>Confirm</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- C-Arm Visualization -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">C-Arm Movement</h3>
+                            <div class="c-arm-model aspect-square flex items-center justify-center mb-4">
+                                <div id="centeringVisualization" class="relative w-64 h-64">
+                                    <svg viewBox="0 0 200 200" class="w-full h-full">
+                                        <path d="M 50 100 A 50 50 0 1 1 150 100" stroke="#007AFF" stroke-width="8" fill="none" id="centeringArm"/>
+                                        <circle cx="50" cy="100" r="12" fill="#FF3B30" id="centeringSource"/>
+                                        <circle cx="150" cy="100" r="12" fill="#34C759" id="centeringDetector"/>
+                                        <rect x="90" y="95" width="20" height="10" fill="#FFD60A" id="centeringTable"/>
+                                    </svg>
+                                    <div class="absolute top-4 left-1/2 transform -translate-x-1/2 angle-display">
+                                        <span id="centeringAngle">0°</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- X-Ray Display -->
+                            <div id="xrayDisplay" class="bg-gray-900 rounded-lg h-32 flex items-center justify-center text-gray-500">
+                                Ready for X-Ray
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between mt-8">
+                        <button id="step2Back" class="control-btn px-8 py-3 rounded-xl text-white font-semibold">
+                            Back
+                        </button>
+                        <button id="step2Next" class="control-btn px-8 py-3 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            Continue to Collision Check
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Collision Check -->
+            <div id="step3" class="step-content hidden">
+                <div class="workflow-container rounded-2xl p-8 mb-8">
+                    <h2 class="text-2xl font-bold mb-6">Step 3: Collision Detection</h2>
+                    
+                    <div class="grid lg:grid-cols-2 gap-8">
+                        <!-- Collision Controls -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Collision Check</h3>
+                            
+                            <div class="mb-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="font-semibold">Scan Range</span>
+                                    <span class="angle-display">0° - 360°</span>
+                                </div>
+                                <button id="startCollisionCheck" class="control-btn w-full py-3 rounded-lg text-white font-semibold">
+                                    Start Collision Check
+                                </button>
+                            </div>
+                            
+                            <!-- Collision Status -->
+                            <div id="collisionStatus" class="p-4 bg-green-500 bg-opacity-20 border border-green-500 rounded-lg mb-4">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+                                    <span class="font-semibold">No Collision Detected</span>
+                                </div>
+                                <p class="text-sm text-gray-300 mt-2">System ready for scanning</p>
+                            </div>
+                            
+                            <!-- Scan Parameters -->
+                            <div class="bg-gray-800 rounded-lg p-4">
+                                <h4 class="font-semibold mb-3">Scan Parameters</h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>Rotation Speed:</span>
+                                        <span>6°/sec</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Current Angle:</span>
+                                        <span id="scanAngle">0°</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Safety Margin:</span>
+                                        <span>5 cm</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Collision Visualization -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Collision Detection</h3>
+                            <div class="c-arm-model aspect-square flex items-center justify-center mb-4">
+                                <div id="collisionVisualization" class="relative w-64 h-64">
+                                    <svg viewBox="0 0 200 200" class="w-full h-full">
+                                        <path d="M 50 100 A 50 50 0 1 1 150 100" stroke="#007AFF" stroke-width="8" fill="none" id="collisionArm"/>
+                                        <circle cx="50" cy="100" r="12" fill="#FF3B30" id="collisionSource"/>
+                                        <circle cx="150" cy="100" r="12" fill="#34C759" id="collisionDetector"/>
+                                        <rect x="90" y="95" width="20" height="10" fill="#FFD60A" id="collisionTable"/>
+                                        
+                                        <!-- Collision Warning Overlay -->
+                                        <g id="collisionWarning" class="hidden">
+                                            <circle cx="100" cy="100" r="60" fill="rgba(255, 59, 48, 0.3)" stroke="#FF3B30" stroke-width="3"/>
+                                            <text x="100" y="105" text-anchor="middle" fill="#FF3B30" font-size="14" font-weight="bold">COLLISION!</text>
+                                        </g>
+                                    </svg>
+                                    <div class="absolute top-4 left-1/2 transform -translate-x-1/2 angle-display">
+                                        <span id="collisionAngle">0°</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Status Display -->
+                            <div class="bg-gray-800 rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">Status</h4>
+                                <div id="collisionLog" class="text-sm text-gray-300 space-y-1">
+                                    <div>Ready to start collision check</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between mt-8">
+                        <button id="step3Back" class="control-btn px-8 py-3 rounded-xl text-white font-semibold">
+                            Back
+                        </button>
+                        <button id="step3Next" class="control-btn px-8 py-3 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            Continue to Scan
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Scan Execution -->
+            <div id="step4" class="step-content hidden">
+                <div class="workflow-container rounded-2xl p-8 mb-8">
+                    <h2 class="text-2xl font-bold mb-6">Step 4: CBCT Scan</h2>
+                    
+                    <div class="grid lg:grid-cols-2 gap-8">
+                        <!-- Scan Controls -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Scan Parameters</h3>
+                            
+                            <div class="bg-gray-800 rounded-lg p-4 mb-6">
+                                <h4 class="font-semibold mb-3">Acquisition Settings</h4>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <label class="block text-gray-400 mb-1">kV</label>
+                                        <input type="number" value="90" class="w-full bg-gray-700 rounded px-3 py-2 text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-400 mb-1">mA</label>
+                                        <input type="number" value="10" class="w-full bg-gray-700 rounded px-3 py-2 text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-400 mb-1">Rotation</label>
+                                        <input type="number" value="360" class="w-full bg-gray-700 rounded px-3 py-2 text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-400 mb-1">Frames</label>
+                                        <input type="number" value="300" class="w-full bg-gray-700 rounded px-3 py-2 text-white">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <button id="startScan" class="control-btn w-full py-3 rounded-lg text-white font-semibold">
+                                    Start CBCT Scan
+                                </button>
+                                
+                                <div class="flex space-x-4">
+                                    <button id="pauseScan" class="control-btn flex-1 py-3 rounded-lg text-white font-semibold disabled:opacity-50" disabled>
+                                        Pause
+                                    </button>
+                                    <button id="stopScan" class="bg-red-600 hover:bg-red-500 flex-1 py-3 rounded-lg text-white font-semibold disabled:opacity-50" disabled>
+                                        Stop
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Scan Progress -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Scan Progress</h3>
+                            
+                            <div class="c-arm-model aspect-square flex items-center justify-center mb-4">
+                                <div id="scanVisualization" class="relative w-64 h-64">
+                                    <svg viewBox="0 0 200 200" class="w-full h-full">
+                                        <path d="M 50 100 A 50 50 0 1 1 150 100" stroke="#007AFF" stroke-width="8" fill="none" id="scanArm"/>
+                                        <circle cx="50" cy="100" r="12" fill="#FF3B30" id="scanSource"/>
+                                        <circle cx="150" cy="100" r="12" fill="#34C759" id="scanDetector"/>
+                                        <rect x="90" y="95" width="20" height="10" fill="#FFD60A" id="scanTable"/>
+                                    </svg>
+                                    <div class="absolute top-4 left-1/2 transform -translate-x-1/2 angle-display">
+                                        <span id="scanAngleDisplay">0°</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Progress Bar -->
+                            <div class="mb-4">
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Progress</span>
+                                    <span id="scanProgress">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div id="scanProgressBar" class="scanning-animation h-2 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Scan Statistics -->
+                            <div class="bg-gray-800 rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">Scan Statistics</h4>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span class="text-gray-400">Current Frame:</span>
+                                        <span id="currentFrame" class="font-semibold ml-2">0</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-400">Total Frames:</span>
+                                        <span class="font-semibold ml-2">300</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-400">Time Remaining:</span>
+                                        <span id="timeRemaining" class="font-semibold ml-2">--:--</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-400">Dose:</span>
+                                        <span id="scanDose" class="font-semibold ml-2">0.0 mGy</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between mt-8">
+                        <button id="step4Back" class="control-btn px-8 py-3 rounded-xl text-white font-semibold">
+                            Back
+                        </button>
+                        <button id="completeScan" class="control-btn px-8 py-3 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            Complete Scan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Reconstruction Modal -->
+    <div id="reconstructionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-2xl p-8 max-w-md mx-4 text-center">
+            <div class="w-16 h-16 bg-blue-500 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-blue-400 animate-spin" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2v2c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8h2c0 3.31 2.69 6 6 6s6-2.69 6-6-2.69-6-6-6V2z"/>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Reconstructing Images</h3>
+            <p class="text-gray-400 mb-6">Please wait while we process your CBCT scan...</p>
+            <div class="w-full bg-gray-700 rounded-full h-2 mb-4">
+                <div id="reconstructionProgress" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <p class="text-sm text-gray-400" id="reconstructionStatus">Initializing reconstruction...</p>
+        </div>
+    </div>
+
+    <script src="cbct.js"></script>
+</body>
+</html>

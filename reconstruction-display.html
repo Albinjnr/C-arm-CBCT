@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CBCT Reconstruction - AJR Medical Imaging System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background: #1a1a1a;
+            color: #ffffff;
+            overflow: hidden;
+        }
+        
+        .header-bg {
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .view-panel {
+            background: rgba(26, 26, 26, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tool-panel {
+            background: rgba(45, 45, 45, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+        
+        .tool-btn {
+            background: rgba(58, 58, 58, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .tool-btn:hover {
+            background: rgba(58, 58, 58, 0.8);
+            border-color: rgba(0, 122, 255, 0.3);
+        }
+        
+        .tool-btn.active {
+            background: rgba(0, 122, 255, 0.2);
+            border-color: #007AFF;
+        }
+        
+        .slice-view {
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .crosshair {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .crosshair-h {
+            width: 100%;
+            height: 1px;
+            background: #FFD60A;
+            top: 50%;
+            left: 0;
+        }
+        
+        .crosshair-v {
+            width: 1px;
+            height: 100%;
+            background: #FFD60A;
+            top: 0;
+            left: 50%;
+        }
+        
+        .measurement-overlay {
+            position: absolute;
+            background: rgba(0, 122, 255, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 20;
+        }
+        
+        .annotation-box {
+            position: absolute;
+            background: rgba(255, 59, 48, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            pointer-events: none;
+            z-index: 20;
+            border: 2px solid #FF3B30;
+        }
+        
+        .annotation-box::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #FF3B30;
+        }
+        
+        .slice-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(58, 58, 58, 0.8);
+            outline: none;
+        }
+        
+        .slice-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007AFF;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+        
+        .slice-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007AFF;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+        
+        .window-level-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(58, 58, 58, 0.8);
+            outline: none;
+        }
+        
+        .window-level-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #34C759;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+        
+        .mip-control {
+            background: linear-gradient(135deg, #FFD60A 0%, #FF9500 100%);
+            color: black;
+            font-weight: 600;
+        }
+        
+        .vr-control {
+            background: linear-gradient(135deg, #FF3B30 0%, #CC2E24 100%);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .export-btn {
+            background: linear-gradient(135deg, #34C759 0%, #28A745 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 199, 89, 0.4);
+        }
+        
+        .study-info {
+            background: rgba(45, 45, 45, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        
+        .dose-display {
+            background: rgba(255, 214, 10, 0.1);
+            border: 1px solid rgba(255, 214, 10, 0.3);
+            color: #FFD60A;
+        }
+        
+        .image-info {
+            background: rgba(0, 122, 255, 0.1);
+            border: 1px solid rgba(0, 122, 255, 0.3);
+            color: #007AFF;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header-bg fixed top-0 left-0 right-0 z-50">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button onclick="history.back()" class="p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20 transition-colors">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                    </button>
+                    <div class="flex items-center space-x-3">
+                        <img src="resources/logo.png" alt="AJR" class="w-8 h-8">
+                        <h1 class="text-xl font-bold">CBCT Reconstruction</h1>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Study Information -->
+                    <div class="text-sm">
+                        <span class="text-gray-400">Patient:</span>
+                        <span id="patientName" class="font-semibold ml-2">John Smith</span>
+                        <span class="text-gray-400 ml-4">Study:</span>
+                        <span id="studyType" class="font-semibold ml-2">Head CBCT</span>
+                    </div>
+                    
+                    <!-- Export Options -->
+                    <button id="exportBtn" class="export-btn px-4 py-2 rounded-lg text-white font-semibold">
+                        <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                        </svg>
+                        Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex pt-16 h-screen">
+        <!-- Left Panel - Views -->
+        <div class="flex-1 flex flex-col p-4">
+            <!-- Multi-View Display -->
+            <div class="grid grid-cols-2 gap-4 flex-1">
+                <!-- Axial View -->
+                <div class="view-panel p-4">
+                    <h3 class="text-lg font-semibold mb-4">Axial View</h3>
+                    <div id="axialView" class="slice-view aspect-square relative cursor-crosshair">
+                        <div class="crosshair crosshair-h"></div>
+                        <div class="crosshair crosshair-v"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-gray-500">
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                    </svg>
+                                </div>
+                                <p>Axial Slice</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm text-gray-400 mb-2">Slice Position</label>
+                        <input type="range" id="axialSlider" class="slice-slider" min="0" max="100" value="50">
+                        <div class="flex justify-between text-xs text-gray-400 mt-1">
+                            <span>Superior</span>
+                            <span>Inferior</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coronal View -->
+                <div class="view-panel p-4">
+                    <h3 class="text-lg font-semibold mb-4">Coronal View</h3>
+                    <div id="coronalView" class="slice-view aspect-square relative cursor-crosshair">
+                        <div class="crosshair crosshair-h"></div>
+                        <div class="crosshair crosshair-v"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-gray-500">
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                    </svg>
+                                </div>
+                                <p>Coronal Slice</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm text-gray-400 mb-2">Slice Position</label>
+                        <input type="range" id="coronalSlider" class="slice-slider" min="0" max="100" value="50">
+                        <div class="flex justify-between text-xs text-gray-400 mt-1">
+                            <span>Anterior</span>
+                            <span>Posterior</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sagittal View -->
+                <div class="view-panel p-4">
+                    <h3 class="text-lg font-semibold mb-4">Sagittal View</h3>
+                    <div id="sagittalView" class="slice-view aspect-square relative cursor-crosshair">
+                        <div class="crosshair crosshair-h"></div>
+                        <div class="crosshair crosshair-v"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-gray-500">
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                    </svg>
+                                </div>
+                                <p>Sagittal Slice</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm text-gray-400 mb-2">Slice Position</label>
+                        <input type="range" id="sagittalSlider" class="slice-slider" min="0" max="100" value="50">
+                        <div class="flex justify-between text-xs text-gray-400 mt-1">
+                            <span>Left</span>
+                            <span>Right</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D Volume Rendering -->
+                <div class="view-panel p-4">
+                    <h3 class="text-lg font-semibold mb-4">3D Volume Rendering</h3>
+                    <div id="volumeView" class="slice-view aspect-square relative">
+                        <div class="absolute inset-0 flex items-center justify-center text-gray-500">
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                    </svg>
+                                </div>
+                                <p>3D Volume</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 space-y-2">
+                        <button id="mipBtn" class="mip-control w-full py-2 rounded-lg text-sm font-semibold">MIP View</button>
+                        <button id="vrBtn" class="vr-control w-full py-2 rounded-lg text-sm font-semibold">VR View</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Tools and Controls -->
+        <div class="w-80 flex flex-col p-4 space-y-4">
+            <!-- Study Information -->
+            <div class="tool-panel p-4">
+                <h3 class="text-lg font-semibold mb-4">Study Information</h3>
+                <div class="space-y-3">
+                    <div class="study-info">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-400">Patient ID:</span>
+                            <span id="patientId">PT001</span>
+                        </div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-400">Study Date:</span>
+                            <span id="studyDate">2024-01-15</span>
+                        </div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-400">Modality:</span>
+                            <span>CBCT</span>
+                        </div>
+                    </div>
+                    
+                    <div class="dose-display rounded-lg p-3">
+                        <div class="flex justify-between text-sm">
+                            <span>Total Dose:</span>
+                            <span id="totalDose" class="font-semibold">15.2 mGy</span>
+                        </div>
+                    </div>
+                    
+                    <div class="image-info rounded-lg p-3">
+                        <div class="flex justify-between text-sm">
+                            <span>Matrix:</span>
+                            <span class="font-semibold">512 × 512</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span>Slice Thickness:</span>
+                            <span class="font-semibold">0.5 mm</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span>Slices:</span>
+                            <span class="font-semibold">300</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Processing Tools -->
+            <div class="tool-panel p-4">
+                <h3 class="text-lg font-semibold mb-4">Image Processing</h3>
+                
+                <!-- Window/Level Controls -->
+                <div class="mb-4">
+                    <label class="block text-sm text-gray-400 mb-2">Window Level</label>
+                    <input type="range" id="windowLevel" class="window-level-slider" min="0" max="1000" value="400">
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>0</span>
+                        <span id="windowLevelValue">400</span>
+                        <span>1000</span>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm text-gray-400 mb-2">Window Width</label>
+                    <input type="range" id="windowWidth" class="window-level-slider" min="100" max="2000" value="1000">
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>100</span>
+                        <span id="windowWidthValue">1000</span>
+                        <span>2000</span>
+                    </div>
+                </div>
+                
+                <!-- Preset Windows -->
+                <div class="mb-4">
+                    <label class="block text-sm text-gray-400 mb-2">Window Presets</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="tool-btn px-3 py-2 rounded-lg text-sm" data-preset="bone">Bone</button>
+                        <button class="tool-btn px-3 py-2 rounded-lg text-sm" data-preset="soft">Soft Tissue</button>
+                        <button class="tool-btn px-3 py-2 rounded-lg text-sm" data-preset="lung">Lung</button>
+                        <button class="tool-btn px-3 py-2 rounded-lg text-sm" data-preset="brain">Brain</button>
+                    </div>
+                </div>
+                
+                <!-- Zoom Controls -->
+                <div class="mb-4">
+                    <label class="block text-sm text-gray-400 mb-2">Zoom</label>
+                    <div class="flex space-x-2">
+                        <button id="zoomOut" class="tool-btn px-3 py-2 rounded-lg text-sm">-</button>
+                        <input type="range" id="zoomSlider" class="flex-1" min="0.5" max="3" step="0.1" value="1">
+                        <button id="zoomIn" class="tool-btn px-3 py-2 rounded-lg text-sm">+</button>
+                    </div>
+                    <div class="text-center text-xs text-gray-400 mt-1">
+                        <span id="zoomValue">100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Measurement Tools -->
+            <div class="tool-panel p-4">
+                <h3 class="text-lg font-semibold mb-4">Measurement Tools</h3>
+                
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button id="lengthTool" class="tool-btn px-3 py-2 rounded-lg text-sm">Length</button>
+                    <button id="angleTool" class="tool-btn px-3 py-2 rounded-lg text-sm">Angle</button>
+                    <button id="areaTool" class="tool-btn px-3 py-2 rounded-lg text-sm">Area</button>
+                    <button id="densityTool" class="tool-btn px-3 py-2 rounded-lg text-sm">Density</button>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm text-gray-400 mb-2">Measurements</label>
+                    <div id="measurementsList" class="bg-gray-800 rounded-lg p-3 text-sm text-gray-300 max-h-32 overflow-y-auto">
+                        <div>No measurements</div>
+                    </div>
+                </div>
+                
+                <button id="clearMeasurements" class="tool-btn w-full py-2 rounded-lg text-sm">Clear All</button>
+            </div>
+
+            <!-- Annotation Tools -->
+            <div class="tool-panel p-4">
+                <h3 class="text-lg font-semibold mb-4">Annotation Tools</h3>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Annotation Text</label>
+                        <input type="text" id="annotationText" class="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm" placeholder="Enter annotation text">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="addAnnotation" class="tool-btn px-3 py-2 rounded-lg text-sm">Add</button>
+                        <button id="clearAnnotations" class="tool-btn px-3 py-2 rounded-lg text-sm">Clear</button>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Annotations</label>
+                        <div id="annotationsList" class="bg-gray-800 rounded-lg p-3 text-sm text-gray-300 max-h-24 overflow-y-auto">
+                            <div>No annotations</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSlice = { axial: 50, coronal: 50, sagittal: 50 };
+        let currentZoom = 1;
+        let currentWindow = { level: 400, width: 1000 };
+        let activeTool = null;
+        let measurements = [];
+        let annotations = [];
+        let isMeasuring = false;
+        let measurementStart = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeReconstruction();
+            setupEventListeners();
+            loadStudyData();
+        });
+
+        function initializeReconstruction() {
+            // Initialize crosshair synchronization
+            setupCrosshairSync();
+            
+            // Initialize window/level controls
+            updateWindowLevel();
+            
+            // Initialize slice sliders
+            updateSliceDisplays();
+        }
+
+        function setupEventListeners() {
+            // Slice sliders
+            document.getElementById('axialSlider').addEventListener('input', function() {
+                currentSlice.axial = parseInt(this.value);
+                updateSliceDisplays();
+                updateCrosshairs();
+            });
+            
+            document.getElementById('coronalSlider').addEventListener('input', function() {
+                currentSlice.coronal = parseInt(this.value);
+                updateSliceDisplays();
+                updateCrosshairs();
+            });
+            
+            document.getElementById('sagittalSlider').addEventListener('input', function() {
+                currentSlice.sagittal = parseInt(this.value);
+                updateSliceDisplays();
+                updateCrosshairs();
+            });
+
+            // Window/Level controls
+            document.getElementById('windowLevel').addEventListener('input', function() {
+                currentWindow.level = parseInt(this.value);
+                updateWindowLevel();
+            });
+            
+            document.getElementById('windowWidth').addEventListener('input', function() {
+                currentWindow.width = parseInt(this.value);
+                updateWindowLevel();
+            });
+
+            // Window presets
+            document.querySelectorAll('[data-preset]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    applyWindowPreset(this.dataset.preset);
+                });
+            });
+
+            // Zoom controls
+            document.getElementById('zoomSlider').addEventListener('input', function() {
+                currentZoom = parseFloat(this.value);
+                updateZoom();
+            });
+            
+            document.getElementById('zoomIn').addEventListener('click', function() {
+                if (currentZoom < 3) {
+                    currentZoom = Math.min(currentZoom + 0.2, 3);
+                    updateZoom();
+                }
+            });
+            
+            document.getElementById('zoomOut').addEventListener('click', function() {
+                if (currentZoom > 0.5) {
+                    currentZoom = Math.max(currentZoom - 0.2, 0.5);
+                    updateZoom();
+                }
+            });
+
+            // Measurement tools
+            document.getElementById('lengthTool').addEventListener('click', () => setActiveTool('length'));
+            document.getElementById('angleTool').addEventListener('click', () => setActiveTool('angle'));
+            document.getElementById('areaTool').addEventListener('click', () => setActiveTool('area'));
+            document.getElementById('densityTool').addEventListener('click', () => setActiveTool('density'));
+            document.getElementById('clearMeasurements').addEventListener('click', clearMeasurements);
+
+            // Annotation tools
+            document.getElementById('addAnnotation').addEventListener('click', addAnnotation);
+            document.getElementById('clearAnnotations').addEventListener('click', clearAnnotations);
+
+            // 3D view controls
+            document.getElementById('mipBtn').addEventListener('click', () => toggle3DView('mip'));
+            document.getElementById('vrBtn').addEventListener('click', () => toggle3DView('vr'));
+
+            // Export button
+            document.getElementById('exportBtn').addEventListener('click', exportStudy);
+
+            // Mouse events for measurements
+            setupMeasurementEvents();
+        }
+
+        function loadStudyData() {
+            // Load study data from localStorage
+            const studyData = localStorage.getItem('cbctScanData');
+            if (studyData) {
+                const data = JSON.parse(studyData);
+                document.getElementById('patientName').textContent = data.patient.name;
+                document.getElementById('patientId').textContent = data.patient.id;
+                document.getElementById('studyType').textContent = data.area + ' CBCT';
+                document.getElementById('studyDate').textContent = new Date().toLocaleDateString();
+                document.getElementById('totalDose').textContent = data.dose + ' mGy';
+            }
+        }
+
+        function setupCrosshairSync() {
+            // Synchronize crosshairs across all views
+            const views = ['axialView', 'coronalView', 'sagittalView'];
+            
+            views.forEach(viewId => {
+                const view = document.getElementById(viewId);
+                view.addEventListener('mousemove', function(e) {
+                    if (activeTool) return; // Don't update crosshairs when measuring
+                    
+                    const rect = view.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    
+                    updateCrosshairPosition(viewId, x, y);
+                });
+            });
+        }
+
+        function updateCrosshairPosition(sourceView, x, y) {
+            // Update crosshairs in all views except the source
+            const views = ['axialView', 'coronalView', 'sagittalView'];
+            
+            views.forEach(viewId => {
+                if (viewId !== sourceView) {
+                    const crosshairH = document.querySelector(`#${viewId} .crosshair-h`);
+                    const crosshairV = document.querySelector(`#${viewId} .crosshair-v`);
+                    
+                    if (crosshairH && crosshairV) {
+                        crosshairH.style.top = y + '%';
+                        crosshairV.style.left = x + '%';
+                    }
+                }
+            });
+        }
+
+        function updateCrosshairs() {
+            // Update crosshair positions based on current slice positions
+            const axialY = currentSlice.axial;
+            const coronalX = currentSlice.coronal;
+            const sagittalX = currentSlice.sagittal;
+            
+            // Update axial view crosshairs
+            const axialCrosshairH = document.querySelector('#axialView .crosshair-h');
+            const axialCrosshairV = document.querySelector('#axialView .crosshair-v');
+            if (axialCrosshairH) axialCrosshairH.style.top = coronalX + '%';
+            if (axialCrosshairV) axialCrosshairV.style.left = sagittalX + '%';
+            
+            // Update coronal view crosshairs
+            const coronalCrosshairH = document.querySelector('#coronalView .crosshair-h');
+            const coronalCrosshairV = document.querySelector('#coronalView .crosshair-v');
+            if (coronalCrosshairH) coronalCrosshairH.style.top = axialY + '%';
+            if (coronalCrosshairV) coronalCrosshairV.style.left = sagittalX + '%';
+            
+            // Update sagittal view crosshairs
+            const sagittalCrosshairH = document.querySelector('#sagittalView .crosshair-h');
+            const sagittalCrosshairV = document.querySelector('#sagittalView .crosshair-v');
+            if (sagittalCrosshairH) sagittalCrosshairH.style.top = axialY + '%';
+            if (sagittalCrosshairV) sagittalCrosshairV.style.left = coronalX + '%';
+        }
+
+        function updateSliceDisplays() {
+            // Update slice position displays
+            document.getElementById('axialSlider').value = currentSlice.axial;
+            document.getElementById('coronalSlider').value = currentSlice.coronal;
+            document.getElementById('sagittalSlider').value = currentSlice.sagittal;
+        }
+
+        function updateWindowLevel() {
+            // Update window/level displays
+            document.getElementById('windowLevelValue').textContent = currentWindow.level;
+            document.getElementById('windowWidthValue').textContent = currentWindow.width;
+            
+            // Apply window/level to all views (simulated)
+            const views = ['axialView', 'coronalView', 'sagittalView'];
+            views.forEach(viewId => {
+                const view = document.getElementById(viewId);
+                // In a real implementation, this would apply the window/level to the image data
+                view.style.filter = `brightness(${currentWindow.level / 500}) contrast(${currentWindow.width / 1000})`;
+            });
+        }
+
+        function applyWindowPreset(preset) {
+            const presets = {
+                bone: { level: 400, width: 1000 },
+                soft: { level: 40, width: 400 },
+                lung: { level: -600, width: 1600 },
+                brain: { level: 40, width: 80 }
+            };
+            
+            if (presets[preset]) {
+                currentWindow = presets[preset];
+                document.getElementById('windowLevel').value = currentWindow.level;
+                document.getElementById('windowWidth').value = currentWindow.width;
+                updateWindowLevel();
+                
+                // Highlight active preset
+                document.querySelectorAll('[data-preset]').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-preset="${preset}"]`).classList.add('active');
+                
+                showNotification(`Applied ${preset} window preset`, 'success');
+            }
+        }
+
+        function updateZoom() {
+            // Update zoom display
+            document.getElementById('zoomSlider').value = currentZoom;
+            document.getElementById('zoomValue').textContent = Math.round(currentZoom * 100) + '%';
+            
+            // Apply zoom to all views
+            const views = ['axialView', 'coronalView', 'sagittalView'];
+            views.forEach(viewId => {
+                const view = document.getElementById(viewId);
+                view.style.transform = `scale(${currentZoom})`;
+            });
+        }
+
+        function setActiveTool(tool) {
+            // Remove active state from all tools
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Set new active tool
+            activeTool = tool;
+            document.getElementById(tool + 'Tool').classList.add('active');
+            
+            showNotification(`${tool.charAt(0).toUpperCase() + tool.slice(1)} tool selected`, 'info');
+        }
+
+        function setupMeasurementEvents() {
+            const views = ['axialView', 'coronalView', 'sagittalView'];
+            
+            views.forEach(viewId => {
+                const view = document.getElementById(viewId);
+                
+                view.addEventListener('mousedown', function(e) {
+                    if (activeTool && !isMeasuring) {
+                        isMeasuring = true;
+                        const rect = view.getBoundingClientRect();
+                        measurementStart = {
+                            x: e.clientX - rect.left,
+                            y: e.clientY - rect.top,
+                            view: viewId
+                        };
+                    }
+                });
+                
+                view.addEventListener('mouseup', function(e) {
+                    if (isMeasuring && measurementStart) {
+                        const rect = view.getBoundingClientRect();
+                        const endX = e.clientX - rect.left;
+                        const endY = e.clientY - rect.top;
+                        
+                        addMeasurement(measurementStart.x, measurementStart.y, endX, endY, measurementStart.view);
+                        
+                        isMeasuring = false;
+                        measurementStart = null;
+                    }
+                });
+            });
+        }
+
+        function addMeasurement(startX, startY, endX, endY, viewId) {
+            const distance = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+            const measurement = {
+                id: Date.now(),
+                type: activeTool,
+                view: viewId,
+                startX, startY, endX, endY,
+                value: distance.toFixed(1) + ' mm'
+            };
+            
+            measurements.push(measurement);
+            updateMeasurementsList();
+            
+            // Add visual measurement overlay
+            addMeasurementOverlay(measurement);
+            
+            showNotification(`Measurement added: ${measurement.value}`, 'success');
+        }
+
+        function addMeasurementOverlay(measurement) {
+            const view = document.getElementById(measurement.view);
+            const overlay = document.createElement('div');
+            overlay.className = 'measurement-overlay';
+            overlay.style.left = ((measurement.startX + measurement.endX) / 2) + 'px';
+            overlay.style.top = ((measurement.startY + measurement.endY) / 2) + 'px';
+            overlay.textContent = measurement.value;
+            overlay.dataset.measurementId = measurement.id;
+            
+            view.appendChild(overlay);
+        }
+
+        function updateMeasurementsList() {
+            const list = document.getElementById('measurementsList');
+            
+            if (measurements.length === 0) {
+                list.innerHTML = '<div>No measurements</div>';
+                return;
+            }
+            
+            list.innerHTML = measurements.map(m => 
+                `<div class="flex justify-between items-center mb-1">
+                    <span>${m.type}: ${m.value}</span>
+                    <button onclick="removeMeasurement(${m.id})" class="text-red-400 text-xs">×</button>
+                </div>`
+            ).join('');
+        }
+
+        function removeMeasurement(id) {
+            measurements = measurements.filter(m => m.id !== id);
+            
+            // Remove visual overlay
+            const overlay = document.querySelector(`[data-measurement-id="${id}"]`);
+            if (overlay) overlay.remove();
+            
+            updateMeasurementsList();
+        }
+
+        function clearMeasurements() {
+            measurements = [];
+            
+            // Remove all measurement overlays
+            document.querySelectorAll('.measurement-overlay').forEach(overlay => {
+                overlay.remove();
+            });
+            
+            updateMeasurementsList();
+            showNotification('All measurements cleared', 'info');
+        }
+
+        function addAnnotation() {
+            const text = document.getElementById('annotationText').value.trim();
+            if (!text) return;
+            
+            const annotation = {
+                id: Date.now(),
+                text: text,
+                timestamp: new Date().toLocaleTimeString()
+            };
+            
+            annotations.push(annotation);
+            updateAnnotationsList();
+            
+            // Clear input
+            document.getElementById('annotationText').value = '';
+            
+            showNotification('Annotation added', 'success');
+        }
+
+        function updateAnnotationsList() {
+            const list = document.getElementById('annotationsList');
+            
+            if (annotations.length === 0) {
+                list.innerHTML = '<div>No annotations</div>';
+                return;
+            }
+            
+            list.innerHTML = annotations.map(a => 
+                `<div class="flex justify-between items-center mb-1">
+                    <span>${a.text}</span>
+                    <button onclick="removeAnnotation(${a.id})" class="text-red-400 text-xs">×</button>
+                </div>`
+            ).join('');
+        }
+
+        function removeAnnotation(id) {
+            annotations = annotations.filter(a => a.id !== id);
+            updateAnnotationsList();
+        }
+
+        function clearAnnotations() {
+            annotations = [];
+            updateAnnotationsList();
+            showNotification('All annotations cleared', 'info');
+        }
+
+        function toggle3DView(viewType) {
+            // Remove active state from both buttons
+            document.getElementById('mipBtn').classList.remove('active');
+            document.getElementById('vrBtn').classList.remove('active');
+            
+            // Activate selected view
+            document.getElementById(viewType + 'Btn').classList.add('active');
+            
+            showNotification(`Switched to ${viewType.toUpperCase()} view`, 'info');
+        }
+
+        function exportStudy() {
+            // Simulate export functionality
+            const exportOptions = [
+                'DICOM Series',
+                'JPEG Images',
+                'PDF Report',
+                '3D Model (STL)'
+            ];
+            
+            showNotification('Preparing export...', 'info');
+            
+            // Simulate export process
+            setTimeout(() => {
+                showNotification('Study exported successfully', 'success');
+            }, 2000);
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg text-white font-medium ${
+                type === 'success' ? 'bg-green-600' : 
+                type === 'error' ? 'bg-red-600' : 
+                type === 'warning' ? 'bg-yellow-600' :
+                'bg-blue-600'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            anime({
+                targets: notification,
+                translateX: [300, 0],
+                opacity: [0, 1],
+                duration: 300,
+                easing: 'easeOutQuad'
+            });
+            
+            setTimeout(() => {
+                anime({
+                    targets: notification,
+                    translateX: [0, 300],
+                    opacity: [1, 0],
+                    duration: 300,
+                    easing: 'easeOutQuad',
+                    complete: function() {
+                        document.body.removeChild(notification);
+                    }
+                });
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

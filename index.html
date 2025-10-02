@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AJR - C-Arm & CBCT Medical Imaging System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.0.12/typed.min.js"></script>
+    <link href="https://unpkg.com/splitting@1.0.6/dist/splitting.css" rel="stylesheet">
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        .login-container {
+            backdrop-filter: blur(20px);
+            background: rgba(45, 45, 45, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .input-field {
+            background: rgba(58, 58, 58, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+            background: rgba(58, 58, 58, 1);
+        }
+        
+        .login-btn {
+            background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 122, 255, 0.3);
+        }
+        
+        .hero-bg {
+            background: url('resources/c-arm-hero.png') center/cover no-repeat;
+            position: relative;
+        }
+        
+        .hero-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 26, 26, 0.7);
+        }
+        
+        .floating-element {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .typing-text {
+            color: #007AFF;
+            font-weight: 600;
+        }
+        
+        .logo-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-bg min-h-screen flex items-center justify-center relative">
+        <!-- Floating Medical Elements -->
+        <div class="absolute top-20 left-20 floating-element opacity-30">
+            <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center">
+                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 8h-2v3h-3v2h3v3h2v-3h3v-2h-3V8zM4 8h2v8H4V8zm4-2h2v12H8V6zm4 4h2v8h-2v-8z"/>
+                </svg>
+            </div>
+        </div>
+        
+        <div class="absolute bottom-32 right-32 floating-element opacity-20" style="animation-delay: -2s;">
+            <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center">
+                <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Left Side - Brand & Info -->
+                <div class="text-white space-y-8">
+                    <div class="logo-container rounded-2xl p-6 inline-block">
+                        <img src="resources/logo.png" alt="AJR Logo" class="w-20 h-20 mx-auto mb-4">
+                        <h1 class="text-4xl font-bold text-center">AJR</h1>
+                        <p class="text-blue-400 text-center text-sm">Advanced Medical Imaging</p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <h2 class="text-5xl font-bold leading-tight">
+                            C-Arm & <span class="typing-text" id="typed-text"></span>
+                        </h2>
+                        <p class="text-xl text-gray-300 leading-relaxed">
+                            Professional medical imaging software with integrated CBCT capabilities, 
+                            designed for precision, safety, and efficiency in modern healthcare environments.
+                        </p>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-4 text-sm">
+                        <div class="flex items-center space-x-2 bg-white bg-opacity-10 rounded-lg px-4 py-2">
+                            <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                            <span>Real-time Fluoroscopy</span>
+                        </div>
+                        <div class="flex items-center space-x-2 bg-white bg-opacity-10 rounded-lg px-4 py-2">
+                            <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
+                            <span>3D CBCT Imaging</span>
+                        </div>
+                        <div class="flex items-center space-x-2 bg-white bg-opacity-10 rounded-lg px-4 py-2">
+                            <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                            <span>Dose Optimization</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side - Login Form -->
+                <div class="login-container rounded-3xl p-8 max-w-md mx-auto">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-white mb-2">Welcome Back</h3>
+                        <p class="text-gray-400">Sign in to access the imaging system</p>
+                    </div>
+                    
+                    <form id="loginForm" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Username</label>
+                            <input 
+                                type="text" 
+                                id="username" 
+                                class="input-field w-full px-4 py-3 rounded-xl text-white placeholder-gray-400 focus:outline-none"
+                                placeholder="Enter your username"
+                                required
+                            >
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                class="input-field w-full px-4 py-3 rounded-xl text-white placeholder-gray-400 focus:outline-none"
+                                placeholder="Enter your password"
+                                required
+                            >
+                        </div>
+                        
+                        <div class="flex items-center justify-between text-sm">
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2 rounded">
+                                <span class="text-gray-400">Remember me</span>
+                            </label>
+                            <button type="button" id="forgotPassword" class="text-blue-400 hover:text-blue-300 transition-colors">
+                                Forgot password?
+                            </button>
+                        </div>
+                        
+                        <button 
+                            type="submit" 
+                            class="login-btn w-full py-4 rounded-xl text-white font-semibold text-lg"
+                        >
+                            Sign In
+                        </button>
+                        
+                        <div class="text-center">
+                            <button type="button" id="changePassword" class="text-blue-400 hover:text-blue-300 transition-colors text-sm">
+                                Change Password
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Version Info -->
+                    <div class="mt-8 pt-6 border-t border-gray-600 text-center">
+                        <p class="text-xs text-gray-500">AJR Medical Imaging System v2.1.0</p>
+                        <p class="text-xs text-gray-600 mt-1">© 2024 Advanced Medical Solutions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Reset Modal -->
+    <div id="passwordModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="login-container rounded-2xl p-8 max-w-md mx-4">
+            <h3 class="text-xl font-bold text-white mb-4">Password Recovery</h3>
+            <p class="text-gray-400 mb-6">Enter your email address to receive password reset instructions.</p>
+            <input type="email" class="input-field w-full px-4 py-3 rounded-xl text-white mb-4" placeholder="Enter your email">
+            <div class="flex space-x-4">
+                <button id="cancelReset" class="flex-1 py-3 bg-gray-600 rounded-xl text-white hover:bg-gray-500 transition-colors">Cancel</button>
+                <button id="sendReset" class="flex-1 py-3 bg-blue-600 rounded-xl text-white hover:bg-blue-500 transition-colors">Send Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Typed.js animation
+            new Typed('#typed-text', {
+                strings: ['CBCT Imaging', 'Medical Excellence', 'Precision Care'],
+                typeSpeed: 80,
+                backSpeed: 50,
+                backDelay: 2000,
+                loop: true,
+                showCursor: true,
+                cursorChar: '|'
+            });
+
+            // Animate floating elements
+            anime({
+                targets: '.floating-element',
+                translateY: [-20, 20],
+                duration: 4000,
+                easing: 'easeInOutSine',
+                direction: 'alternate',
+                loop: true,
+                delay: function(el, i) { return i * 1000; }
+            });
+
+            // Form animations
+            const loginForm = document.getElementById('loginForm');
+            const inputs = document.querySelectorAll('.input-field');
+            
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    anime({
+                        targets: this,
+                        scale: [1, 1.02],
+                        duration: 300,
+                        easing: 'easeOutQuad'
+                    });
+                });
+                
+                input.addEventListener('blur', function() {
+                    anime({
+                        targets: this,
+                        scale: [1.02, 1],
+                        duration: 300,
+                        easing: 'easeOutQuad'
+                    });
+                });
+            });
+
+            // Login form submission
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                // Default credentials check
+                if (username === 'ajr' && password === 's') {
+                    // Animate success
+                    anime({
+                        targets: '.login-btn',
+                        scale: [1, 0.95, 1],
+                        backgroundColor: ['#007AFF', '#34C759', '#007AFF'],
+                        duration: 600,
+                        easing: 'easeOutQuad',
+                        complete: function() {
+                            // Redirect to worklist
+                            window.location.href = 'worklist.html';
+                        }
+                    });
+                } else {
+                    // Animate error
+                    anime({
+                        targets: '.login-container',
+                        translateX: [-10, 10, -10, 10, 0],
+                        duration: 500,
+                        easing: 'easeOutQuad'
+                    });
+                    
+                    // Show error message
+                    showNotification('Invalid username or password', 'error');
+                }
+            });
+
+            // Password reset modal
+            const forgotPasswordBtn = document.getElementById('forgotPassword');
+            const passwordModal = document.getElementById('passwordModal');
+            const cancelReset = document.getElementById('cancelReset');
+            const sendReset = document.getElementById('sendReset');
+
+            forgotPasswordBtn.addEventListener('click', function() {
+                passwordModal.classList.remove('hidden');
+                passwordModal.classList.add('flex');
+                
+                anime({
+                    targets: passwordModal.querySelector('.login-container'),
+                    scale: [0.8, 1],
+                    opacity: [0, 1],
+                    duration: 300,
+                    easing: 'easeOutQuad'
+                });
+            });
+
+            cancelReset.addEventListener('click', function() {
+                closePasswordModal();
+            });
+
+            sendReset.addEventListener('click', function() {
+                showNotification('Password reset instructions sent to your email', 'success');
+                closePasswordModal();
+            });
+
+            function closePasswordModal() {
+                anime({
+                    targets: passwordModal.querySelector('.login-container'),
+                    scale: [1, 0.8],
+                    opacity: [1, 0],
+                    duration: 300,
+                    easing: 'easeOutQuad',
+                    complete: function() {
+                        passwordModal.classList.add('hidden');
+                        passwordModal.classList.remove('flex');
+                    }
+                });
+            }
+
+            // Change password functionality
+            document.getElementById('changePassword').addEventListener('click', function() {
+                showNotification('Password change feature coming soon', 'info');
+            });
+
+            function showNotification(message, type) {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg text-white font-medium ${
+                    type === 'success' ? 'bg-green-600' : 
+                    type === 'error' ? 'bg-red-600' : 
+                    'bg-blue-600'
+                }`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                anime({
+                    targets: notification,
+                    translateX: [300, 0],
+                    opacity: [0, 1],
+                    duration: 300,
+                    easing: 'easeOutQuad'
+                });
+                
+                setTimeout(() => {
+                    anime({
+                        targets: notification,
+                        translateX: [0, 300],
+                        opacity: [1, 0],
+                        duration: 300,
+                        easing: 'easeOutQuad',
+                        complete: function() {
+                            document.body.removeChild(notification);
+                        }
+                    });
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>

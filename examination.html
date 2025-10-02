@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examination - AJR Medical Imaging System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.3.2/pixi.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background: #1a1a1a;
+            color: #ffffff;
+            overflow: hidden;
+        }
+        
+        .header-bg {
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .imaging-container {
+            background: rgba(26, 26, 26, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .control-panel {
+            background: rgba(45, 45, 45, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .fire-btn {
+            background: linear-gradient(135deg, #FF3B30 0%, #CC2E24 100%);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .fire-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(255, 59, 48, 0.4);
+        }
+        
+        .fire-btn.active {
+            background: linear-gradient(135deg, #32D74B 0%, #28A745 100%);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(50, 215, 75, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(50, 215, 75, 0); }
+        }
+        
+        .fire-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .fire-btn:hover::before {
+            left: 100%;
+        }
+        
+        .mode-btn {
+            background: rgba(58, 58, 58, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .mode-btn:hover {
+            border-color: rgba(0, 122, 255, 0.3);
+        }
+        
+        .mode-btn.active {
+            background: rgba(0, 122, 255, 0.2);
+            border-color: #007AFF;
+        }
+        
+        .tool-btn {
+            background: rgba(58, 58, 58, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .tool-btn:hover {
+            background: rgba(58, 58, 58, 0.8);
+            border-color: rgba(0, 122, 255, 0.3);
+        }
+        
+        .tool-btn.active {
+            background: rgba(0, 122, 255, 0.2);
+            border-color: #007AFF;
+        }
+        
+        .emergency-stop {
+            background: linear-gradient(135deg, #FF3B30 0%, #CC2E24 100%);
+            border: 3px solid #FF3B30;
+            animation: emergency-pulse 2s infinite;
+        }
+        
+        @keyframes emergency-pulse {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 0 15px rgba(255, 59, 48, 0);
+                transform: scale(1.05);
+            }
+        }
+        
+        .status-bar {
+            background: rgba(26, 26, 26, 0.9);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .image-counter {
+            background: rgba(0, 122, 255, 0.2);
+            border: 1px solid rgba(0, 122, 255, 0.3);
+        }
+        
+        .parameter-overlay {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .live-indicator {
+            background: linear-gradient(135deg, #32D74B 0%, #28A745 100%);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .live-indicator.inactive {
+            background: linear-gradient(135deg, #6D6D70 0%, #48484A 100%);
+        }
+        
+        .menu-panel {
+            background: rgba(45, 45, 45, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        
+        .dropdown {
+            background: rgba(58, 58, 58, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            width: 100%;
+        }
+        
+        .dropdown:focus {
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+        }
+        
+        .swap-btn, .save-btn {
+            background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .swap-btn:hover, .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 122, 255, 0.4);
+        }
+        
+        .report-btn {
+            background: linear-gradient(135deg, #34C759 0%, #28A745 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .report-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 199, 89, 0.4);
+        }
+        
+        .close-study-btn {
+            background: linear-gradient(135deg, #6D6D70 0%, #48484A 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .close-study-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(109, 109, 112, 0.4);
+        }
+        
+        .procedure-dropdown {
+            background: rgba(58, 58, 58, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+        
+        .procedure-dropdown:focus {
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+        }
+        
+        .screen-container {
+            background: #000;
+            border: 2px solid #333;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .screen-header {
+            background: #2d2d2d;
+            padding: 8px 16px;
+            border-bottom: 1px solid #444;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .screen-content {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
+        }
+        
+        .swapped-image {
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header-bg fixed top-0 left-0 right-0 z-50">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button onclick="history.back()" class="p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20 transition-colors">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                    </button>
+                    <div class="flex items-center space-x-3">
+                        <img src="resources/logo.png" alt="AJR" class="w-8 h-8">
+                        <h1 class="text-xl font-bold">Examination Interface</h1>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Patient Info -->
+                    <div class="text-sm">
+                        <span class="text-gray-400">Patient:</span>
+                        <span id="patientName" class="font-semibold ml-2">John Smith</span>
+                        <span class="text-gray-400 ml-4">Study:</span>
+                        <span id="studyType" class="font-semibold ml-2">Knee Joint - Orthopedic</span>
+                    </div>
+                    
+                    <!-- Safety Indicators -->
+                    <div class="flex space-x-3">
+                        <div id="collisionIndicator" class="px-3 py-1 rounded-full text-xs font-medium bg-green-500 bg-opacity-20 text-green-300">
+                            <span class="w-2 h-2 bg-green-400 rounded-full inline-block mr-2"></span>
+                            No Collision
+                        </div>
+                        <div id="tubeHeatIndicator" class="px-3 py-1 rounded-full text-xs font-medium bg-green-500 bg-opacity-20 text-green-300">
+                            <span class="w-2 h-2 bg-green-400 rounded-full inline-block mr-2"></span>
+                            Tube Normal
+                        </div>
+                        <div id="emergencyIndicator" class="px-3 py-1 rounded-full text-xs font-medium bg-green-500 bg-opacity-20 text-green-300">
+                            <span class="w-2 h-2 bg-green-400 rounded-full inline-block mr-2"></span>
+                            System Ready
+                        </div>
+                    </div>
+                    
+                    <!-- Emergency Stop -->
+                    <button id="emergencyStop" class="emergency-stop w-12 h-12 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 6h12v12H6z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Interface -->
+    <div class="flex pt-16 h-screen">
+        <!-- Left Panel - Dual Screens -->
+        <div class="flex-1 flex flex-col p-4">
+            <!-- Dual Screen Display -->
+            <div class="grid grid-cols-2 gap-4 flex-1">
+                <!-- Live Screen (Left) -->
+                <div class="screen-container">
+                    <div class="screen-header">
+                        <span id="leftScreenTitle">FLUOROSCOPY</span>
+                        <div class="flex items-center space-x-2">
+                            <div id="liveStatusIndicator" class="w-2 h-2 bg-gray-500 rounded-full"></div>
+                            <span class="text-xs">READY</span>
+                        </div>
+                    </div>
+                    <div id="liveScreen" class="screen-content">
+                        <div class="text-center">
+                            <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-10 h-10 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold mb-2">Live Fluoroscopy</h3>
+                            <p class="text-gray-400 text-sm">Ready for imaging</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Live Parameters Overlay -->
+                    <div class="parameter-overlay top-2 left-2">
+                        <div class="text-xs space-y-1">
+                            <div>kV: <span id="kvValue">70</span></div>
+                            <div>mA: <span id="maValue">2.5</span></div>
+                            <div>ms: <span id="msValue">16</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="parameter-overlay top-2 right-2">
+                        <div class="text-xs space-y-1">
+                            <div>WL: <span id="wlValue">400</span></div>
+                            <div>WW: <span id="wwValue">1000</span></div>
+                            <div id="liveStatus" class="text-green-400">LIH</div>
+                        </div>
+                    </div>
+                    
+                    <div class="parameter-overlay bottom-2 left-2">
+                        <div class="text-xs">
+                            <div id="hospitalName">AJR Medical Center</div>
+                            <div id="currentTime">--:--:--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="parameter-overlay bottom-2 right-2">
+                        <div class="text-xs text-right">
+                            <div>Images: <span id="imageCount">0</span></div>
+                            <div>Dose: <span id="doseValue">0.0</span> mGy</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Swapped Image Screen (Right) -->
+                <div class="screen-container">
+                    <div class="screen-header">
+                        <span id="rightScreenTitle">REFERENCE IMAGE</span>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs">SWAPPED</span>
+                        </div>
+                    </div>
+                    <div id="swappedScreen" class="screen-content">
+                        <div class="text-center">
+                            <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-10 h-10 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zm9-4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold mb-2">Reference Image</h3>
+                            <p class="text-gray-400 text-sm">No image swapped</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Fire Controls -->
+            <div class="p-4 border-t border-gray-600">
+                <div class="flex justify-center items-center space-x-4">
+                    <!-- Swap Button -->
+                    <button id="swapBtn" class="swap-btn px-6 py-3 rounded-xl text-white font-semibold">
+                        <svg class="w-5 h-5 inline-block mr-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>
+                        </svg>
+                        Swap
+                    </button>
+                    
+                    <!-- Left Fire Button -->
+                    <div class="text-center">
+                        <button id="leftFireBtn" class="fire-btn w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                            FLUORO
+                        </button>
+                        <p class="text-sm text-gray-400 mt-2">Left Pedal</p>
+                    </div>
+                    
+                    <!-- Save Button -->
+                    <button id="saveBtn" class="save-btn px-6 py-3 rounded-xl text-white font-semibold">
+                        <svg class="w-5 h-5 inline-block mr-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+                        </svg>
+                        Save
+                    </button>
+                    
+                    <!-- Right Fire Button -->
+                    <div class="text-center">
+                        <button id="rightFireBtn" class="fire-btn w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                            RAD
+                        </button>
+                        <p class="text-sm text-gray-400 mt-2">Right Pedal</p>
+                    </div>
+                    
+                    <!-- Report Button -->
+                    <button id="reportBtn" class="report-btn px-6 py-3 rounded-xl text-white font-semibold">
+                        <svg class="w-5 h-5 inline-block mr-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                        </svg>
+                        Report
+                    </button>
+                </div>
+                
+                <!-- Mode Display -->
+                <div class="flex justify-center mt-4 space-x-6">
+                    <div class="text-center">
+                        <div class="text-sm text-gray-400">Mode</div>
+                        <div id="currentMode" class="font-semibold">Fluoro & Rad</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-sm text-gray-400">Procedure</div>
+                        <div id="currentProcedure" class="font-semibold">Orthopedic</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-sm text-gray-400">Status</div>
+                        <div id="beamStatus" class="font-semibold text-green-400">Ready</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Controls and Navigation -->
+        <div class="w-96 flex flex-col p-4 space-y-4">
+            <!-- Close Study Button -->
+            <button onclick="closeStudy()" class="close-study-btn w-full py-3 rounded-xl text-white font-semibold">
+                <svg class="w-5 h-5 inline-block mr-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+                Close Study
+            </button>
+
+            <!-- Procedure Type Selection -->
+            <div class="menu-panel">
+                <h3 class="text-lg font-semibold mb-4">Procedure Type</h3>
+                <select id="procedureType" class="procedure-dropdown">
+                    <option value="skeletal">Skeletal</option>
+                    <option value="pain-management">Pain Management</option>
+                    <option value="endoscopy">Endoscopy</option>
+                    <option value="vascular">Vascular</option>
+                    <option value="cardiac">Cardiac</option>
+                    <option value="extremities">Extremities</option>
+                </select>
+            </div>
+            
+            <!-- Control Menus -->
+            <div class="flex-1">
+                <!-- Modes Menu -->
+                <div id="modesMenu" class="menu-panel">
+                    <h3 class="text-lg font-semibold mb-4">Imaging Modes</h3>
+                    
+                    <!-- Left Mode Dropdown -->
+                    <div class="mb-4">
+                        <label class="block text-sm text-gray-400 mb-2">Left Mode</label>
+                        <select id="leftMode" class="dropdown">
+                            <option value="fluoroscopy">Fluoroscopy</option>
+                            <option value="roadmap">Roadmap</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Right Mode Dropdown -->
+                    <div class="mb-4">
+                        <label class="block text-sm text-gray-400 mb-2">Right Mode</label>
+                        <select id="rightMode" class="dropdown">
+                            <option value="rad-mod">Rad Mod</option>
+                            <option value="cine-mode">Cine Mode</option>
+                            <option value="dsa">DSA</option>
+                            <option value="trace-mode">Trace Mode</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Apply Button -->
+                    <button id="applyMode" class="w-full py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold transition-colors">
+                        Apply Configuration
+                    </button>
+                </div>
+                
+                <!-- Images Menu -->
+                <div id="imagesMenu" class="menu-panel hidden">
+                    <h3 class="text-lg font-semibold mb-4">Image Management</h3>
+                    <div class="space-y-3">
+                        <button class="w-full py-3 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors">
+                            View Gallery
+                        </button>
+                        <button class="w-full py-3 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors">
+                            Export Images
+                        </button>
+                        <button class="w-full py-3 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors">
+                            Delete Selected
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- CBCT Menu -->
+                <div id="cbctMenu" class="menu-panel hidden">
+                    <h3 class="text-lg font-semibold mb-4">CBCT Workflow</h3>
+                    <div class="space-y-3">
+                        <button onclick="startCBCTWorkflow()" class="w-full py-3 bg-purple-600 hover:bg-purple-500 rounded-lg transition-colors">
+                            Start CBCT
+                        </button>
+                        <button class="w-full py-3 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors">
+                            Settings
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Settings Menu -->
+                <div id="settingsMenu" class="menu-panel hidden">
+                    <h3 class="text-lg font-semibold mb-4">System Settings</h3>
+                    <div class="space-y-3">
+                        <button class="w-full py-3 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors">
+                            Dose Settings
+                        </button>
+                        <button class="w-full py-3 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors">
+                            Image Quality
+                        </button>
+                        <button class="w-full py-3 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors">
+                            Safety Parameters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Close Study Modal -->
+    <div id="closeStudyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-2xl p-8 max-w-md mx-4 text-center">
+            <div class="w-16 h-16 bg-blue-500 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Close Study</h3>
+            <p class="text-gray-400 mb-6">Do you want to perform advanced processing on this study?</p>
+            <div class="flex space-x-4">
+                <button onclick="navigateToAdvancedProcessing()" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold transition-colors">
+                    Yes, Advanced Processing
+                </button>
+                <button onclick="navigateToStudyList()" class="flex-1 py-3 bg-gray-600 hover:bg-gray-500 rounded-lg font-semibold transition-colors">
+                    No, Go to Study List
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-2xl p-8 max-w-4xl max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Examination Report</h3>
+                <button onclick="closeReportModal()" class="text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="reportContent" class="space-y-6">
+                <!-- Report content will be generated here -->
+            </div>
+            
+            <div class="flex justify-end space-x-4 mt-6">
+                <button onclick="printReport()" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold transition-colors">
+                    Print Report
+                </button>
+                <button onclick="exportReport()" class="px-6 py-3 bg-green-600 hover:bg-green-500 rounded-lg font-semibold transition-colors">
+                    Export PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isLive = false;
+        let imageCount = 0;
+        let totalDose = 0;
+        let currentPatient = null;
+        let leftMode = 'fluoroscopy';
+        let rightMode = 'rad-mod';
+        let currentMenu = 'modes';
+        let swappedImage = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeExamination();
+            setupEventListeners();
+            updateTime();
+            setInterval(updateTime, 1000);
+        });
+
+        function initializeExamination() {
+            // Load patient data from localStorage
+            const patientData = localStorage.getItem('currentPatient');
+            if (patientData) {
+                currentPatient = JSON.parse(patientData);
+                document.getElementById('patientName').textContent = currentPatient.name;
+                document.getElementById('studyType').textContent = currentPatient.study || 'General Study';
+            }
+            
+            // Initialize displays
+            updateImageCount();
+            updateDoseDisplay();
+            updateButtonLabels();
+        }
+
+        function setupEventListeners() {
+            // Fire buttons
+            document.getElementById('leftFireBtn').addEventListener('click', toggleFluoro);
+            document.getElementById('rightFireBtn').addEventListener('click', captureRadiographic);
+            
+            // Control buttons
+            document.getElementById('swapBtn').addEventListener('click', swapImages);
+            document.getElementById('saveBtn').addEventListener('click', saveImage);
+            document.getElementById('reportBtn').addEventListener('click', generateReport);
+            
+            // Menu buttons
+            document.querySelectorAll('[data-menu]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    switchMenu(this.dataset.menu);
+                });
+            });
+            
+            // Mode configuration
+            document.getElementById('applyMode').addEventListener('click', applyModeConfiguration);
+            
+            // Emergency stop
+            document.getElementById('emergencyStop').addEventListener('click', emergencyStop);
+            
+            // Procedure type change
+            document.getElementById('procedureType').addEventListener('change', updateProcedure);
+            
+            // Mode dropdown changes
+            document.getElementById('leftMode').addEventListener('change', updateButtonLabels);
+            document.getElementById('rightMode').addEventListener('change', updateButtonLabels);
+        }
+
+        function updateButtonLabels() {
+            leftMode = document.getElementById('leftMode').value;
+            rightMode = document.getElementById('rightMode').value;
+            
+            // Update button labels
+            document.getElementById('leftFireBtn').textContent = leftMode.toUpperCase();
+            document.getElementById('rightFireBtn').textContent = rightMode.toUpperCase();
+            
+            // Update screen titles
+            document.getElementById('leftScreenTitle').textContent = leftMode.toUpperCase();
+            document.getElementById('rightScreenTitle').textContent = rightMode.toUpperCase();
+            
+            // Update current mode display
+            document.getElementById('currentMode').textContent = `${leftMode} & ${rightMode}`;
+        }
+
+        function toggleFluoro() {
+            const btn = document.getElementById('leftFireBtn');
+            const indicator = document.getElementById('liveIndicator');
+            const statusIndicator = document.getElementById('liveStatusIndicator');
+            
+            if (!isLive) {
+                // Start fluoroscopy
+                isLive = true;
+                btn.classList.add('active');
+                indicator.classList.remove('inactive');
+                indicator.innerHTML = '<span class="w-2 h-2 bg-white rounded-full inline-block mr-2"></span>LIVE';
+                statusIndicator.className = 'w-2 h-2 bg-green-400 rounded-full';
+                
+                // Update live screen appearance
+                const liveScreen = document.getElementById('liveScreen');
+                liveScreen.style.background = 'radial-gradient(circle, #0d4f0d 0%, #000 100%)';
+                liveScreen.innerHTML = `
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2 text-green-400">LIVE ${leftMode.toUpperCase()}</h3>
+                        <p class="text-gray-300 text-sm">Image acquisition in progress</p>
+                    </div>
+                `;
+                
+                // Start image counting
+                startImageCounting();
+                
+                // Update status
+                document.getElementById('beamStatus').textContent = 'Fluoro Active';
+                document.getElementById('beamStatus').className = 'font-semibold text-red-400';
+            } else {
+                // Stop fluoroscopy
+                isLive = false;
+                btn.classList.remove('active');
+                indicator.classList.add('inactive');
+                indicator.innerHTML = '<span class="w-2 h-2 bg-white rounded-full inline-block mr-2"></span>READY';
+                statusIndicator.className = 'w-2 h-2 bg-gray-500 rounded-full';
+                
+                // Reset live screen
+                const liveScreen = document.getElementById('liveScreen');
+                liveScreen.style.background = 'radial-gradient(circle, #1a1a1a 0%, #000 100%)';
+                liveScreen.innerHTML = `
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-10 h-10 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">Live ${leftMode.replace('-', ' ')}</h3>
+                        <p class="text-gray-400 text-sm">Ready for imaging</p>
+                    </div>
+                `;
+                
+                // Update status
+                document.getElementById('beamStatus').textContent = 'Ready';
+                document.getElementById('beamStatus').className = 'font-semibold text-green-400';
+            }
+        }
+
+        function captureRadiographic() {
+            // Simulate radiographic capture
+            imageCount++;
+            totalDose += 0.5;
+            updateImageCount();
+            updateDoseDisplay();
+            
+            // Flash effect on live screen
+            const liveScreen = document.getElementById('liveScreen');
+            liveScreen.style.background = 'white';
+            setTimeout(() => {
+                liveScreen.style.background = isLive ? 'radial-gradient(circle, #0d4f0d 0%, #000 100%)' : 'radial-gradient(circle, #1a1a1a 0%, #000 100%)';
+            }, 100);
+            
+            showNotification(`${rightMode.replace('-', ' ')} image captured`, 'success');
+        }
+
+        function swapImages() {
+            // Simulate image swapping
+            const liveScreen = document.getElementById('liveScreen');
+            const swappedScreen = document.getElementById('swappedScreen');
+            
+            if (!swappedImage) {
+                // First swap - capture current live image
+                swappedImage = {
+                    type: 'captured',
+                    timestamp: new Date().toLocaleTimeString(),
+                    dose: totalDose.toFixed(1)
+                };
+                
+                swappedScreen.innerHTML = `
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2 text-blue-400">Captured Image</h3>
+                        <p class="text-gray-300 text-sm">Time: ${swappedImage.timestamp}</p>
+                        <p class="text-gray-300 text-sm">Dose: ${swappedImage.dose} mGy</p>
+                    </div>
+                `;
+                
+                showNotification('Image swapped to reference screen', 'info');
+            } else {
+                // Swap back
+                swappedScreen.innerHTML = `
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-10 h-10 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zm9-4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">Reference Image</h3>
+                        <p class="text-gray-400 text-sm">No image swapped</p>
+                    </div>
+                `;
+                swappedImage = null;
+                showNotification('Image returned to live screen', 'info');
+            }
+            
+            // Add visual feedback
+            anime({
+                targets: [liveScreen, swappedScreen],
+                scale: [1, 0.95, 1],
+                duration: 300,
+                easing: 'easeOutQuad'
+            });
+        }
+
+        function saveImage() {
+            showNotification('Image saved successfully', 'success');
+            
+            // Add visual feedback
+            anime({
+                targets: '#saveBtn',
+                scale: [1, 0.95, 1],
+                backgroundColor: ['#007AFF', '#34C759', '#007AFF'],
+                duration: 300,
+                easing: 'easeOutQuad'
+            });
+        }
+
+        function generateReport() {
+            const modal = document.getElementById('reportModal');
+            const content = document.getElementById('reportContent');
+            
+            // Generate sample report
+            const reportData = {
+                patient: currentPatient || { name: 'John Smith', id: 'PT001', age: 45 },
+                studyDate: new Date().toLocaleDateString(),
+                studyTime: new Date().toLocaleTimeString(),
+                procedure: document.getElementById('procedureType').value,
+                images: imageCount,
+                dose: totalDose.toFixed(2),
+                findings: 'Normal study with no significant abnormalities detected.',
+                impression: 'Unremarkable examination.',
+                recommendations: 'No further imaging required at this time.'
+            };
+            
+            content.innerHTML = `
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <h4 class="font-semibold text-gray-400 mb-2">Patient Information</h4>
+                        <p>Name: ${reportData.patient.name}</p>
+                        <p>ID: ${reportData.patient.id}</p>
+                        <p>Age: ${reportData.patient.age}</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-400 mb-2">Study Details</h4>
+                        <p>Date: ${reportData.studyDate}</p>
+                        <p>Time: ${reportData.studyTime}</p>
+                        <p>Procedure: ${reportData.procedure}</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <h4 class="font-semibold text-gray-400 mb-2">Technical Data</h4>
+                        <p>Images Acquired: ${reportData.images}</p>
+                        <p>Total Dose: ${reportData.dose} mGy</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-400 mb-2">System Information</h4>
+                        <p>System: AJR C-Arm System</p>
+                        <p>Operator: Dr. Smith</p>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-400 mb-2">Findings</h4>
+                    <p class="bg-gray-700 p-4 rounded-lg">${reportData.findings}</p>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-400 mb-2">Impression</h4>
+                    <p class="bg-gray-700 p-4 rounded-lg">${reportData.impression}</p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-gray-400 mb-2">Recommendations</h4>
+                    <p class="bg-gray-700 p-4 rounded-lg">${reportData.recommendations}</p>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeReportModal() {
+            const modal = document.getElementById('reportModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function printReport() {
+            showNotification('Printing report...', 'info');
+        }
+
+        function exportReport() {
+            showNotification('Exporting report to PDF...', 'info');
+        }
+
+        function switchMenu(menuName) {
+            // Update active menu button
+            document.querySelectorAll('[data-menu]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-menu="${menuName}"]`).classList.add('active');
+            
+            // Hide all menu panels
+            document.querySelectorAll('[id$="Menu"]').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            
+            // Show selected menu panel
+            document.getElementById(menuName + 'Menu').classList.remove('hidden');
+            
+            currentMenu = menuName;
+        }
+
+        function applyModeConfiguration() {
+            leftMode = document.getElementById('leftMode').value;
+            rightMode = document.getElementById('rightMode').value;
+            
+            updateButtonLabels();
+            
+            showNotification('Mode configuration applied', 'success');
+            
+            // Add visual feedback
+            anime({
+                targets: '#applyMode',
+                scale: [1, 0.95, 1],
+                backgroundColor: ['#3B82F6', '#2563EB', '#3B82F6'],
+                duration: 300,
+                easing: 'easeOutQuad'
+            });
+        }
+
+        function updateProcedure() {
+            const procedure = document.getElementById('procedureType').value;
+            document.getElementById('currentProcedure').textContent = procedure.replace('-', ' ').toUpperCase();
+        }
+
+        function updateImageCount() {
+            document.getElementById('imageCount').textContent = imageCount;
+        }
+
+        function updateDoseDisplay() {
+            document.getElementById('doseValue').textContent = totalDose.toFixed(1);
+        }
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+        }
+
+        function emergencyStop() {
+            // Stop all operations
+            isLive = false;
+            document.getElementById('leftFireBtn').classList.remove('active');
+            document.getElementById('liveIndicator').classList.add('inactive');
+            document.getElementById('liveIndicator').innerHTML = '<span class="w-2 h-2 bg-white rounded-full inline-block mr-2"></span>STOPPED';
+            document.getElementById('beamStatus').textContent = 'EMERGENCY STOP';
+            document.getElementById('beamStatus').className = 'font-semibold text-red-400';
+            
+            showNotification('EMERGENCY STOP ACTIVATED', 'error');
+        }
+
+        function startCBCTWorkflow() {
+            // Store current patient data
+            if (currentPatient) {
+                localStorage.setItem('currentPatient', JSON.stringify(currentPatient));
+            }
+            
+            // Navigate to CBCT workflow
+            window.location.href = 'cbct-workflow.html';
+        }
+
+        function closeStudy() {
+            document.getElementById('closeStudyModal').classList.remove('hidden');
+            document.getElementById('closeStudyModal').classList.add('flex');
+        }
+
+        function navigateToStudyList() {
+            document.getElementById('closeStudyModal').classList.add('hidden');
+            document.getElementById('closeStudyModal').classList.remove('flex');
+            window.location.href = 'study-list.html';
+        }
+
+        function navigateToAdvancedProcessing() {
+            document.getElementById('closeStudyModal').classList.add('hidden');
+            document.getElementById('closeStudyModal').classList.remove('flex');
+            window.location.href = 'reconstruction-display.html';
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg text-white font-medium ${
+                type === 'success' ? 'bg-green-600' : 
+                type === 'error' ? 'bg-red-600' : 
+                type === 'warning' ? 'bg-yellow-600' :
+                'bg-blue-600'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            anime({
+                targets: notification,
+                translateX: [300, 0],
+                opacity: [0, 1],
+                duration: 300,
+                easing: 'easeOutQuad'
+            });
+            
+            setTimeout(() => {
+                anime({
+                    targets: notification,
+                    translateX: [0, 300],
+                    opacity: [1, 0],
+                    duration: 300,
+                    easing: 'easeOutQuad',
+                    complete: function() {
+                        document.body.removeChild(notification);
+                    }
+                });
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
